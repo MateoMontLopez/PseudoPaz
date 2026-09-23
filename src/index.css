@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: #09090b;
+  color: #f4f4f5;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* CodeMirror 6 custom styling */
+.cm-editor {
+  height: 100%;
+  font-family: 'JetBrains Mono', Consolas, monospace !important;
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+  background-color: #09090b !important;
+}
+
+.cm-editor .cm-scroller {
+  font-family: inherit;
+  overflow: auto;
+}
+
+.cm-editor .cm-gutters {
+  background-color: #09090b !important;
+  color: #52525b !important;
+  border-right: 1px solid #18181b !important;
+  padding-right: 4px;
+}
+
+.cm-editor .cm-activeLineGutter {
+  background-color: #18181b !important;
+  color: #a1a1aa !important;
+}
+
+.cm-editor .cm-activeLine {
+  background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+.cm-editor.cm-focused {
+  outline: none !important;
+}
+
+/* Terminal pulsing cursor */
+@keyframes pulseCursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-cursor {
+  animation: pulseCursor 1s step-end infinite;
+}
