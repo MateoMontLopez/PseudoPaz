@@ -1,0 +1,106 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { Handle, Position, NodeProps, Node, useReactFlow } from '@xyflow/react';
+import { FlowchartNodeData } from './nodeTypes';
+
+export type IONodeType = Node<FlowchartNodeData, 'io'>;
+
+export const IONode: React.FC<NodeProps<IONodeType>> = ({ id, data, selected }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [text, setText] = useState(data.label || 'Leer x');
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const { setNodes } = useReactFlow();
+
+  useEffect(() => {
+    setText(data.label);
+  }, [data.label]);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleFinishEditing = () => {
+    setIsEditing(false);
+    const newLabel = text.trim() || 'Leer / Mostrar';
+    setText(newLabel);
+    setNodes((nodes) =>
+      nodes.map((node) => {
+        if (node.id === id) {
+          return {
+            ...node,
+            data: { ...node.data, label: newLabel },
+          };
+        }
+        return node;
+      })
+    );
+  };
+
+  return (
+    <div
+      onDoubleClick={() => setIsEditing(true)}
+      className={`relative group -skew-x-12 px-6 py-2.5 rounded-sm border transition-all duration-150 select-none shadow-md min-w-[130px] max-w-[240px] text-center ${
+        selected
+          ? 'border-purple-400 bg-purple-950/40 ring-2 ring-purple-500/30'
+          : 'border-purple-700/60 bg-zinc-900/90 hover:border-purple-500'
+      }`}
+    >
+      {/* Handle superior de entrada (Target) - ajustado al skew */}
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!w-2.5 !h-2.5 !bg-zinc-800 !border-2 !border-purple-400 hover:!scale-125 !transition-transform !skew-x-12"
+      />
+
+      {/* Handle izquierdo */}
+      <Handle
+        type="target"
+        id="left"
+        position={Position.Left}
+        className="!w-2 !h-2 !bg-zinc-800 !border-2 !border-purple-400/80 hover:!scale-125 !transition-transform !skew-x-12"
+      />
+
+      {/* Contenido con des-inclinación (skew inverso) para que el texto sea horizontal */}
+      <div className="skew-x-12">
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onBlur={handleFinishEditing}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleFinishEditing();
+              if (e.key === 'Escape') {
+                setText(data.label);
+                setIsEditing(false);
+              }
+            }}
+            className="bg-transparent text-purple-200 text-xs font-mono font-medium text-center outline-none w-full border-b border-purple-400/50"
+          />
+        ) : (
+          <span className="text-xs font-mono font-medium text-purple-200 block break-words">
+            {text}
+          </span>
+        )}
+      </div>
+
+      {/* Handle derecho */}
+      <Handle
+        type="source"
+        id="right"
+        position={Position.Right}
+        className="!w-2 !h-2 !bg-zinc-800 !border-2 !border-purple-400/80 hover:!scale-125 !transition-transform !skew-x-12"
+      />
+
+      {/* Handle inferior de salida (Source) */}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!w-2.5 !h-2.5 !bg-zinc-800 !border-2 !border-purple-400 hover:!scale-125 !transition-transform !skew-x-12"
+      />
+    </div>
+  );
+};

@@ -3,6 +3,8 @@ import { Header } from './components/layout/Header';
 import { IDELayout } from './components/layout/IDELayout';
 import { CodeEditor } from './components/editor/CodeEditor';
 import { VirtualConsole } from './components/console/VirtualConsole';
+import { FlowchartCanvas } from './components/flowchart/FlowchartCanvas';
+import { AppMode } from './components/layout/ModeSwitch';
 import { usePseudocodeRunner } from './hooks/usePseudocodeRunner';
 import { useSessionGuard } from './hooks/useSessionGuard';
 import { AlertTriangle, X } from 'lucide-react';
@@ -36,6 +38,7 @@ FinAlgoritmo
 `;
 
 export const App: React.FC = () => {
+  const [mode, setMode] = useState<AppMode>('code');
   const [code, setCode] = useState<string>(INITIAL_CODE);
 
   // Hook del motor Web Worker
@@ -77,6 +80,8 @@ export const App: React.FC = () => {
     <div className="flex flex-col h-screen w-screen bg-[#09090b] text-zinc-100 overflow-hidden font-sans">
       {/* Barra Superior */}
       <Header
+        mode={mode}
+        onModeChange={setMode}
         status={status}
         isGuardEnabled={isGuardEnabled}
         onRun={handleRun}
@@ -99,27 +104,33 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* Contenido Principal: Editor + Consola Split Pane */}
-      <IDELayout
-        onRunShortcut={handleRun}
-        editor={
-          <CodeEditor
-            value={code}
-            onChange={setCode}
-            isClipboardGuardEnabled={true}
-          />
-        }
-        consolePanel={
-          <VirtualConsole
-            outputs={outputs}
-            status={status}
-            inputPrompt={inputPrompt}
-            executionTimeMs={executionTimeMs}
-            onProvideInput={provideInput}
-            onClearConsole={clearConsole}
-          />
-        }
-      />
+      {/* Vista condicional según el modo seleccionado */}
+      {mode === 'code' ? (
+        <IDELayout
+          onRunShortcut={handleRun}
+          editor={
+            <CodeEditor
+              value={code}
+              onChange={setCode}
+              isClipboardGuardEnabled={true}
+            />
+          }
+          consolePanel={
+            <VirtualConsole
+              outputs={outputs}
+              status={status}
+              inputPrompt={inputPrompt}
+              executionTimeMs={executionTimeMs}
+              onProvideInput={provideInput}
+              onClearConsole={clearConsole}
+            />
+          }
+        />
+      ) : (
+        <main className="flex-1 w-full h-[calc(100vh-48px)] overflow-hidden">
+          <FlowchartCanvas isExamMode={isGuardEnabled} />
+        </main>
+      )}
     </div>
   );
 };
