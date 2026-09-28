@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Square, RotateCcw, ShieldCheck, ShieldAlert, Cpu } from 'lucide-react';
+import { Play, Square, RotateCcw, ShieldCheck, ShieldAlert, Cpu, FileDown } from 'lucide-react';
 import { RunnerStatus } from '../../hooks/usePseudocodeRunner';
 import { ModeSwitch, AppMode } from './ModeSwitch';
 
@@ -12,6 +12,7 @@ interface HeaderProps {
   onStop: () => void;
   onClearEditor: () => void;
   onToggleGuard: () => void;
+  onOpenExportModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -23,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   onStop,
   onClearEditor,
   onToggleGuard,
+  onOpenExportModal,
 }) => {
   const isRunning = status === 'running' || status === 'waiting_input';
 
@@ -119,7 +121,15 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         )}
 
-        <div className="h-4 w-[1px] bg-zinc-800"></div>
+        {/* Botón de Exportar a PDF con certificación de autenticidad */}
+        <button
+          onClick={onOpenExportModal}
+          title="Exportar entrega académica a PDF con certificación de autenticidad"
+          className="flex items-center space-x-1.5 px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 text-sky-400 hover:text-sky-300 border border-zinc-800 hover:border-sky-500/40 rounded-md text-xs font-medium transition-all shadow-xs active:scale-95 cursor-pointer"
+        >
+          <FileDown className="w-3.5 h-3.5 text-sky-400" />
+          <span className="hidden md:inline">Exportar PDF</span>
+        </button>
 
         {/* Toggle para Modo Examen / Focus Guard */}
         <button

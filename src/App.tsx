@@ -1,12 +1,14 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { Header } from './components/layout/Header';
 import { IDELayout } from './components/layout/IDELayout';
 import { CodeEditor } from './components/editor/CodeEditor';
 import { VirtualConsole } from './components/console/VirtualConsole';
 import { FlowchartCanvas } from './components/flowchart/FlowchartCanvas';
 import { AppMode } from './components/layout/ModeSwitch';
+import { ExportPdfModal } from './components/pdf/ExportPdfModal';
 import { usePseudocodeRunner } from './hooks/usePseudocodeRunner';
 import { useSessionGuard } from './hooks/useSessionGuard';
+import { usePdfExporter } from './hooks/usePdfExporter';
 import { AlertTriangle, X } from 'lucide-react';
 
 const INITIAL_CODE = `Algoritmo SinTitulo
@@ -17,6 +19,8 @@ FinAlgoritmo
 export const App: React.FC = () => {
   const [mode, setMode] = useState<AppMode>('code');
   const [code, setCode] = useState<string>(INITIAL_CODE);
+
+  const flowchartContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Hook del motor Web Worker
   const {
@@ -33,7 +37,7 @@ export const App: React.FC = () => {
   // Callback de borrado efímero de sesión cuando se pierde el foco en Modo Examen
   const handleSessionReset = useCallback(() => {
     stop();
-    setCode('// Sesión borrada por pérdida de foco\n');
+    setCode('Algoritmo SinTitulo\n  \nFinAlgoritmo\n');
     clearConsole();
   }, [stop, clearConsole]);
 
@@ -43,13 +47,25 @@ export const App: React.FC = () => {
     initialEnabled: false, // Inicia en Modo Práctica por defecto para no frustrar el testing, con toggle en Header
   });
 
+  // Hook del exportador de PDF
+  const {
+    isModalOpen,
+    openExportModal,
+    closeExportModal,
+    executeExport,
+  } = usePdfExporter({
+    code,
+    outputs,
+    getFlowchartElement: () => flowchartContainerRef.current,
+  });
+
   const handleRun = () => {
     if (!code.trim()) return;
     run(code);
   };
 
   const handleClearEditor = () => {
-    setCode('');
+    setCode('Algoritmo SinTitulo\n  \nFinAlgoritmo\n');
     clearConsole();
   };
 
@@ -65,6 +81,7 @@ export const App: React.FC = () => {
         onStop={stop}
         onClearEditor={handleClearEditor}
         onToggleGuard={toggleGuard}
+        onOpenExportModal={openExportModal}
       />
 
       {/* Toast minimalista de pérdida de foco */}
@@ -81,33 +98,50 @@ export const App: React.FC = () => {
         </div>
       )}
 
-      {/* Vista condicional según el modo seleccionado */}
-      {mode === 'code' ? (
-        <IDELayout
-          onRunShortcut={handleRun}
-          editor={
-            <CodeEditor
-              value={code}
-              onChange={setCode}
-              isClipboardGuardEnabled={true}
-            />
-          }
-          consolePanel={
-            <VirtualConsole
-              outputs={outputs}
-              status={status}
-              inputPrompt={inputPrompt}
-              executionTimeMs={executionTimeMs}
-              onProvideInput={provideInput}
-              onClearConsole={clearConsole}
-            />
-          }
-        />
-      ) : (
-        <main className="flex-1 w-full h-[calc(100vh-48px)] overflow-hidden">
+      {/* Contenedor de Vistas:
+          Mantenemos FlowchartCanvas montado en el DOM con renderizado condicional o posicionamiento offscreen
+          para permitir capturas PNG de alta resolución incluso desde la pestaña de Pseudocódigo */}
+      <div className="flex-1 w-full relative overflow-hidden">
+        {/* Vista Editor de Pseudocódigo */}
+        <div className={`w-full h-full ${mode === 'code' ? 'flex' : 'hidden'}`}>
+          <IDELayout
+            onRunShortcut={handleRun}
+            editor={
+              <CodeEditor
+                value={code}
+                onChange={setCode}
+                isClipboardGuardEnabled={true}
+              />
+            }
+            consolePanel={
+              <VirtualConsole
+                outputs={outputs}
+                status={status}
+                inputPrompt={inputPrompt}
+                executionTimeMs={executionTimeMs}
+                onProvideInput={provideInput}
+                onClearConsole={clearConsole}
+              />
+            }
+          />
+        </div>
+
+        {/* Vista Diagrama de Flujo (DFD) */}
+        <div
+          ref={flowchartContainerRef}
+          className={`w-full h-full ${mode === 'flowchart' ? 'block' : 'opacity-0 pointer-events-none fixed -left-[9999px] w-[1280px] h-[800px]'}`}
+        >
           <FlowchartCanvas isExamMode={isGuardEnabled} />
-        </main>
-      )}
+        </div>
+      </div>
+
+      {/* Modal de Exportación a PDF con Certificación Criptográfica */}
+      <ExportPdfModal
+        isOpen={isModalOpen}
+        onClose={closeExportModal}
+        onConfirmExport={executeExport}
+        code={code}
+      />
     </div>
   );
 };
