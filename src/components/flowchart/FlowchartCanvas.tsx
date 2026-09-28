@@ -18,7 +18,8 @@ import '@xyflow/react/dist/style.css';
 
 import { TerminalNode } from './nodes/TerminalNode';
 import { ProcessNode } from './nodes/ProcessNode';
-import { IONode } from './nodes/IONode';
+import { InputNode, IONode } from './nodes/IONode';
+import { OutputNode } from './nodes/OutputNode';
 import { DecisionNode } from './nodes/DecisionNode';
 import { SidebarToolbar } from './SidebarToolbar';
 import { useFlowchartSecurity } from './useFlowchartSecurity';
@@ -27,7 +28,9 @@ import { ShieldAlert } from 'lucide-react';
 const nodeTypes = {
   terminal: TerminalNode,
   process: ProcessNode,
-  io: IONode,
+  input: InputNode,
+  io: IONode, // Retrocompatibilidad para diagramas existentes
+  output: OutputNode,
   decision: DecisionNode,
 };
 

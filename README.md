@@ -219,12 +219,28 @@ src/
 │   ├── layout/            # Header, ModeSwitch e IDELayout (Splitter ajustable)
 │   ├── editor/            # CodeEditor (CodeMirror 6) y useClipboardGuard
 │   ├── console/           # VirtualConsole (Terminal I/O) y ConsoleInput
+│   ├── pdf/               # Exportación PDF e Identificación Criptográfica (Fase 4)
 │   └── flowchart/         # Módulo DFD (React Flow Canvas, Símbolos ANSI y Toolbar)
-│       └── nodes/         # TerminalNode, ProcessNode, IONode, DecisionNode
-├── hooks/                 # usePseudocodeRunner y useSessionGuard
+│       └── nodes/         # TerminalNode, ProcessNode, InputNode, OutputNode, DecisionNode
+├── services/              # Criptografía SHA-256, captura de canvas y generación PDF
+├── hooks/                 # usePseudocodeRunner, useSessionGuard y usePdfExporter
 ├── App.tsx                # Orquestador de la aplicación
 └── main.tsx               # Entrada de React
 ```
+
+---
+
+## ✏️ Simbología Estándar de Diagramas de Flujo (DFD)
+
+El módulo de diagramación implementa la simbología estándar ANSI/ISO para diseño de algoritmos:
+
+| Símbolo | Figura | Color | Descripción / Operación Asociada |
+| :--- | :--- | :--- | :--- |
+| **Terminal** | Óvalo | Verde | Representa el arranque y la finalización del algoritmo (`Inicio` y `Fin`). |
+| **Entrada de Datos** | Paralelogramo | Morado | Lectura de valores ingresados por el usuario (`Leer variable`). |
+| **Salida / Impresión** | Documento | Cian | Salida o impresión de datos en pantalla (`Mostrar "Mensaje"` o `Escribir`). |
+| **Proceso** | Rectángulo | Azul | Cálculos, operaciones aritméticas y asignaciones (`x <- 10`). |
+| **Decisión** | Rombo | Ámbar | Bifurcación condicional con conectores direccionales automáticos **`Sí`** (Verde) y **`No`** (Rojo). |
 
 ---
 

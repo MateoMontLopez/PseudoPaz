@@ -2,11 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps, Node, useReactFlow } from '@xyflow/react';
 import { FlowchartNodeData } from './nodeTypes';
 
+export type InputNodeType = Node<FlowchartNodeData, 'input'>;
 export type IONodeType = Node<FlowchartNodeData, 'io'>;
 
-export const IONode: React.FC<NodeProps<IONodeType>> = ({ id, data, selected }) => {
+/**
+ * Símbolo ANSI para Entrada de Datos (Paralelogramo).
+ * Utilizado para la operación "Leer".
+ */
+export const InputNode: React.FC<NodeProps<InputNodeType | IONodeType>> = ({ id, data, selected }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [text, setText] = useState(data.label || 'Leer x');
+  const [text, setText] = useState(data.label || 'Leer variable');
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { setNodes } = useReactFlow();
 
@@ -23,7 +28,7 @@ export const IONode: React.FC<NodeProps<IONodeType>> = ({ id, data, selected }) 
 
   const handleFinishEditing = () => {
     setIsEditing(false);
-    const newLabel = text.trim() || 'Leer / Mostrar';
+    const newLabel = text.trim() || 'Leer variable';
     setText(newLabel);
     setNodes((nodes) =>
       nodes.map((node) => {
@@ -104,3 +109,5 @@ export const IONode: React.FC<NodeProps<IONodeType>> = ({ id, data, selected }) 
     </div>
   );
 };
+
+export const IONode = InputNode;

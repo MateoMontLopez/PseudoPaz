@@ -50,17 +50,48 @@ const SYMBOLS: SymbolItem[] = [
     badge: 'Rectángulo',
   },
   {
-    type: 'io',
-    name: 'Entrada / Salida',
-    description: 'Lectura o escritura (Leer/Mostrar)',
+    type: 'input',
+    name: 'Entrada',
+    description: 'Lectura de variables (Leer)',
     defaultLabel: 'Leer variable',
     icon: (
       <div className="w-9 h-6 -skew-x-12 rounded-xs border-2 border-purple-500 bg-purple-950/40 flex items-center justify-center text-[9px] text-purple-300 font-mono">
-        <span className="skew-x-12">I/O</span>
+        <span className="skew-x-12">Leer</span>
       </div>
     ),
     colorClass: 'border-purple-500/50 hover:border-purple-400 bg-purple-950/20 text-purple-300',
     badge: 'Paralelogramo',
+  },
+  {
+    type: 'output',
+    name: 'Salida / Impresión',
+    description: 'Mostrar o imprimir datos (Mostrar)',
+    defaultLabel: 'Mostrar resultado',
+    icon: (
+      <div className="w-9 h-6 flex items-center justify-center">
+        <svg viewBox="0 0 36 24" className="w-9 h-6 overflow-visible">
+          <path
+            d="M 1 1 L 35 1 L 35 18 C 30 14, 23 14, 18 18 C 13 22, 6 22, 1 18 Z"
+            fill="rgba(6, 182, 212, 0.25)"
+            stroke="#06b6d4"
+            strokeWidth="1.5"
+          />
+          <text
+            x="18"
+            y="11"
+            fill="#67e8f9"
+            fontSize="7"
+            fontFamily="monospace"
+            textAnchor="middle"
+            dominantBaseline="middle"
+          >
+            Mostrar
+          </text>
+        </svg>
+      </div>
+    ),
+    colorClass: 'border-cyan-500/50 hover:border-cyan-400 bg-cyan-950/20 text-cyan-300',
+    badge: 'Documento',
   },
   {
     type: 'decision',
