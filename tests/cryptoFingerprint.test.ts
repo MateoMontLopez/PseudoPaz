@@ -69,3 +69,25 @@ describe('Servicio Criptográfico Anti-Copia (Fase 4)', () => {
     expect(fp1.shortHash).not.toBe(fp2.shortHash);
   });
 });
+
+import { chunkCodeLines } from '../src/services/pdf/renderDocumentSnapshots';
+
+describe('Paginación y Rasterización Anti-Copia (Fase 4)', () => {
+  it('debe mantener en un solo bloque códigos menores o iguales a 30 líneas', () => {
+    const lines = Array.from({ length: 25 }, (_, i) => `linea_${i + 1}`);
+    const chunks = chunkCodeLines(lines);
+
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0]).toHaveLength(25);
+  });
+
+  it('debe paginar en bloques de 30 y 45 líneas códigos extensos', () => {
+    const lines = Array.from({ length: 90 }, (_, i) => `linea_${i + 1}`);
+    const chunks = chunkCodeLines(lines);
+
+    expect(chunks).toHaveLength(3);
+    expect(chunks[0]).toHaveLength(30); // Página 1
+    expect(chunks[1]).toHaveLength(45); // Página 2
+    expect(chunks[2]).toHaveLength(15); // Página 3
+  });
+});

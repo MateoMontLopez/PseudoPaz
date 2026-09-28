@@ -1,8 +1,15 @@
 import * as pdfMakeModule from 'pdfmake/build/pdfmake';
 import * as pdfFontsModule from 'pdfmake/build/vfs_fonts';
-import { TDocumentDefinitions, Content, TableCell } from 'pdfmake/interfaces';
+import { TDocumentDefinitions, Content } from 'pdfmake/interfaces';
 import { FingerprintResult } from './cryptoFingerprint';
 import { ConsoleOutputItem } from '../../hooks/usePseudocodeRunner';
+import {
+  renderHeaderCard,
+  chunkCodeLines,
+  renderCodeChunk,
+  renderConsoleCard,
+  renderSectionTitle,
+} from './renderDocumentSnapshots';
 
 // Configuración de fuentes virtuales en el cliente de forma compatible con Vite/Rollup ESM
 const pdfMake: typeof pdfMakeModule & { vfs?: unknown } =
@@ -35,6 +42,8 @@ export interface GeneratePdfOptions {
 
 /**
  * Genera y descarga el documento PDF con certificación de autenticidad criptográfica e inmovilización anti-copia.
+ * Todo el contenido sensible se incrusta como capas visuales rasterizadas de alta resolución (300 DPI)
+ * con la marca de agua y hashes criptográficos fusionados en los píxeles, haciendo imposible la selección o copia de texto.
  */
 export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<void> {
   const {
@@ -51,225 +60,68 @@ export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<
 
   const content: Content[] = [];
 
-  // ================= ENCABEZADO INSTITUCIONAL =================
+  // ================= 1. MEMBRETE Y CREDENCIALES (INALTERABLE / NO COPIABLE) =================
+  const headerCardImage = renderHeaderCard({
+    studentName,
+    subject,
+    course,
+    workTitle,
+    fingerprint,
+  });
+
   content.push({
-    table: {
-      widths: ['*'],
-      body: [
-        [
-          {
-            fillColor: '#0f172a', // Slate 900
-            margin: [8, 8, 8, 8],
-            stack: [
-              {
-                text: 'INSTITUTO UNIVERSITARIO DE LA PAZ — UNIPAZ',
-                fontSize: 11,
-                bold: true,
-                color: '#38bdf8',
-                alignment: 'center',
-                characterSpacing: 0.5,
-              },
-              {
-                text: 'ENTREGA DE TRABAJO ACADÉMICO CERTIFICADO',
-                fontSize: 9,
-                color: '#94a3b8',
-                alignment: 'center',
-                margin: [0, 2, 0, 0],
-              },
-            ],
-          },
-        ],
-      ],
-    },
-    layout: 'noBorders',
+    image: headerCardImage,
+    width: 515,
     margin: [0, 0, 0, 10],
   });
 
-  // ================= METADATOS DEL ESTUDIANTE Y TRABAJO =================
-  content.push({
-    table: {
-      widths: ['35%', '65%'],
-      body: [
-        [
-          { text: 'ESTUDIANTE (AUTOR):', bold: true, fontSize: 9, color: '#334155' },
-          { text: studentName, bold: true, fontSize: 10, color: '#0f172a' },
-        ],
-        [
-          { text: 'ASIGNATURA / MATERIA:', bold: true, fontSize: 9, color: '#334155' },
-          { text: subject, fontSize: 9, color: '#1e293b' },
-        ],
-        [
-          { text: 'CURSO / SECCIÓN:', bold: true, fontSize: 9, color: '#334155' },
-          { text: course, bold: true, fontSize: 9, color: '#0284c7' },
-        ],
-        [
-          { text: 'ACTIVIDAD / GUÍA:', bold: true, fontSize: 9, color: '#334155' },
-          { text: workTitle, fontSize: 9, color: '#1e293b' },
-        ],
-        [
-          { text: 'FECHA Y HORA DE EMISIÓN:', bold: true, fontSize: 9, color: '#334155' },
-          { text: fingerprint.timestampFormatted, fontSize: 8.5, color: '#475569' },
-        ],
-        [
-          { text: 'CÓDIGO DE INTEGRIDAD (HASH):', bold: true, fontSize: 9, color: '#334155' },
-          { text: fingerprint.shortHash, bold: true, fontSize: 9, color: '#047857' },
-        ],
-      ],
-    },
-    layout: {
-      fillColor: (rowIndex: number) => (rowIndex % 2 === 0 ? '#f8fafc' : '#ffffff'),
-      hLineWidth: () => 0.5,
-      vLineWidth: () => 0.5,
-      hLineColor: () => '#cbd5e1',
-      vLineColor: () => '#cbd5e1',
-    },
-    margin: [0, 0, 0, 12],
-  });
-
-  // Barra de advertencia de autenticidad
-  content.push({
-    table: {
-      widths: ['*'],
-      body: [
-        [
-          {
-            fillColor: '#ecfdf5', // Emerald 50
-            border: [true, true, true, true],
-            margin: [6, 4, 6, 4],
-            text: [
-              { text: '🔒 VERIFICACIÓN DE AUTENTICIDAD CRIPTOGRÁFICA ACTIVA\n', bold: true, fontSize: 8, color: '#065f46' },
-              {
-                text: `Digest SHA-256 Completo: ${fingerprint.fullHash}\n`,
-                fontSize: 6.5,
-                font: 'Roboto',
-                color: '#047857',
-              },
-              {
-                text: 'Este documento contiene firmas y marcas de agua esteganográficas indelebles ligadas al estudiante y a su código fuente original.',
-                fontSize: 7,
-                italics: true,
-                color: '#065f46',
-              },
-            ],
-          },
-        ],
-      ],
-    },
-    layout: {
-      hLineColor: () => '#10b981',
-      vLineColor: () => '#10b981',
-    },
-    margin: [0, 0, 0, 15],
-  });
-
-  // ================= SECCIÓN 1: PSEUDOCÓDIGO =================
+  // ================= 2. SECCIÓN PSEUDOCÓDIGO (RASTERIZADO NO SELECCIONABLE) =================
   if (exportMode === 'code_only' || exportMode === 'both') {
-    content.push({
-      text: '1. CÓDIGO FUENTE (PSEUDOCÓDIGO EN ESPAÑOL)',
-      fontSize: 11,
-      bold: true,
-      color: '#0f172a',
-      margin: [0, 5, 0, 6],
+    const rawLines = code.split('\n');
+    const chunks = chunkCodeLines(rawLines);
+
+    chunks.forEach((chunkLines, chunkIdx) => {
+      const startLineNumber = chunkIdx === 0 ? 1 : 31 + (chunkIdx - 1) * 45;
+      const chunkImage = renderCodeChunk({
+        lines: chunkLines,
+        startLineNumber,
+        isFirstChunk: chunkIdx === 0,
+        watermarkText: fingerprint.watermarkText,
+      });
+
+      content.push({
+        image: chunkImage,
+        width: 515,
+        margin: [0, 0, 0, 12],
+        pageBreak: chunkIdx > 0 ? 'before' : undefined,
+      });
     });
 
-    const lines = code.split('\n');
-    const tableBody: TableCell[][] = lines.map((line, index) => [
-      {
-        text: String(index + 1),
-        fontSize: 8,
-        color: '#64748b',
-        alignment: 'right' as const,
-        margin: [0, 1, 4, 1],
-      },
-      {
-        text: line.length > 0 ? line : ' ',
-        fontSize: 8.5,
-        color: '#1e293b',
-        font: 'Roboto',
-        margin: [4, 1, 0, 1],
-      },
-    ]);
-
-    content.push({
-      table: {
-        widths: [24, '*'],
-        body: tableBody,
-      },
-      layout: {
-        fillColor: '#f8fafc',
-        hLineWidth: () => 0.5,
-        vLineWidth: (i: number) => (i === 1 ? 0.5 : 0),
-        hLineColor: () => '#e2e8f0',
-        vLineColor: () => '#cbd5e1',
-      },
-      margin: [0, 0, 0, 15],
-    });
-
-    // Salidas de la consola si existen
+    // Consola Virtual I/O rasterizada
     if (outputs.length > 0) {
-      content.push({
-        text: 'REGISTRO DE EJECUCIÓN (CONSOLA VIRTUAL I/O)',
-        fontSize: 10,
-        bold: true,
-        color: '#334155',
-        margin: [0, 4, 0, 4],
-      });
-
-      const consoleLines = outputs.map((out) => {
-        let prefix = '[SALIDA] ';
-        let color = '#0f172a';
-        if (out.type === 'stdin') {
-          prefix = '[ENTRADA >] ';
-          color = '#0284c7';
-        } else if (out.type === 'error') {
-          prefix = '[ERROR] ';
-          color = '#b91c1c';
-        } else if (out.type === 'system') {
-          prefix = '[SISTEMA] ';
-          color = '#475569';
-        }
-
-        return {
-          text: `${prefix}${out.text}\n`,
-          fontSize: 7.5,
-          font: 'Roboto',
-          color,
-        };
-      });
-
-      content.push({
-        table: {
-          widths: ['*'],
-          body: [
-            [
-              {
-                fillColor: '#f1f5f9',
-                margin: [8, 6, 8, 6],
-                stack: consoleLines,
-              },
-            ],
-          ],
-        },
-        layout: {
-          hLineColor: () => '#cbd5e1',
-          vLineColor: () => '#cbd5e1',
-        },
-        margin: [0, 0, 0, 15],
-      });
+      const consoleImage = renderConsoleCard(outputs);
+      if (consoleImage) {
+        content.push({
+          image: consoleImage,
+          width: 515,
+          margin: [0, 0, 0, 14],
+          pageBreak: chunks.length > 1 || rawLines.length > 18 ? 'before' : undefined,
+        });
+      }
     }
   }
 
-  // ================= SECCIÓN 2: DIAGRAMA DE FLUJO (DFD) =================
+  // ================= 3. SECCIÓN DIAGRAMA DE FLUJO (DFD) =================
   if (exportMode === 'dfd_only' || exportMode === 'both') {
     const isPageBreakNeeded = exportMode === 'both';
 
+    // Título de la sección como imagen vectorizada no seleccionable
+    const dfdTitleImage = renderSectionTitle('2. DIAGRAMA DE FLUJO (DFD)');
     content.push({
-      text: exportMode === 'both' ? '2. DIAGRAMA DE FLUJO (DFD)' : 'DIAGRAMA DE FLUJO (DFD)',
-      fontSize: 11,
-      bold: true,
-      color: '#0f172a',
+      image: dfdTitleImage,
+      width: 515,
       pageBreak: isPageBreakNeeded ? 'before' : undefined,
-      margin: [0, 5, 0, 8],
+      margin: [0, 5, 0, 12],
     });
 
     if (dfdImageBase64) {
@@ -281,23 +133,11 @@ export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<
       });
     } else {
       content.push({
-        table: {
-          widths: ['*'],
-          body: [
-            [
-              {
-                fillColor: '#f8fafc',
-                margin: [10, 30, 10, 30],
-                text: 'No se generó captura de diagrama de flujo para este documento.',
-                alignment: 'center',
-                color: '#64748b',
-                fontSize: 9,
-                italics: true,
-              },
-            ],
-          ],
-        },
-        layout: 'noBorders',
+        text: 'Lienzo de diagrama de flujo vacío.',
+        fontSize: 9,
+        italics: true,
+        color: '#64748b',
+        alignment: 'center',
       });
     }
   }
