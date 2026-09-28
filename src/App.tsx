@@ -9,31 +9,8 @@ import { usePseudocodeRunner } from './hooks/usePseudocodeRunner';
 import { useSessionGuard } from './hooks/useSessionGuard';
 import { AlertTriangle, X } from 'lucide-react';
 
-const INITIAL_CODE = `Algoritmo SumaInteractiva
-  // Declaración de variables
-  Var
-    limite, suma, i: entero;
-    nombre: cadena;
-
-  Mostrar "====================================";
-  Mostrar "   BIENVENIDO A PSEUDOPAZ IDE       ";
-  Mostrar "====================================";
-
-  Mostrar "¿Cuál es tu nombre?";
-  Leer nombre;
-  Mostrar "¡Hola,", nombre, "! Vamos a calcular una suma acumulada.";
-
-  Mostrar "¿Hasta qué número entero deseas sumar?";
-  Leer limite;
-
-  suma <- 0;
-  Para i <- 1 Hasta limite Hacer
-    suma <- suma + i;
-  FinPara
-
-  Mostrar "------------------------------------";
-  Mostrar "La sumatoria total de 1 a", limite, "es:", suma;
-  Mostrar "¡Ejecución terminada exitosamente!";
+const INITIAL_CODE = `Algoritmo SinTitulo
+  
 FinAlgoritmo
 `;
 

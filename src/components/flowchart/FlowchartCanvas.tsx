@@ -31,104 +31,9 @@ const nodeTypes = {
   decision: DecisionNode,
 };
 
-// Diagrama de muestra inicial
-const INITIAL_NODES: Node[] = [
-  {
-    id: 'node-start',
-    type: 'terminal',
-    position: { x: 280, y: 40 },
-    data: { label: 'Inicio' },
-  },
-  {
-    id: 'node-input',
-    type: 'io',
-    position: { x: 260, y: 130 },
-    data: { label: 'Leer numero' },
-  },
-  {
-    id: 'node-decision',
-    type: 'decision',
-    position: { x: 255, y: 220 },
-    data: { label: '¿numero > 0?' },
-  },
-  {
-    id: 'node-proc-pos',
-    type: 'process',
-    position: { x: 440, y: 340 },
-    data: { label: 'Mostrar "Positivo"' },
-  },
-  {
-    id: 'node-proc-neg',
-    type: 'process',
-    position: { x: 80, y: 340 },
-    data: { label: 'Mostrar "No positivo"' },
-  },
-  {
-    id: 'node-end',
-    type: 'terminal',
-    position: { x: 280, y: 460 },
-    data: { label: 'Fin' },
-  },
-];
-
-const INITIAL_EDGES: Edge[] = [
-  {
-    id: 'e1-2',
-    source: 'node-start',
-    target: 'node-input',
-    type: 'smoothstep',
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#38bdf8' },
-    style: { stroke: '#38bdf8', strokeWidth: 1.5 },
-  },
-  {
-    id: 'e2-3',
-    source: 'node-input',
-    target: 'node-decision',
-    type: 'smoothstep',
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#38bdf8' },
-    style: { stroke: '#38bdf8', strokeWidth: 1.5 },
-  },
-  {
-    id: 'e3-yes',
-    source: 'node-decision',
-    sourceHandle: 'yes',
-    target: 'node-proc-pos',
-    type: 'smoothstep',
-    label: 'Sí',
-    labelStyle: { fill: '#34d399', fontWeight: 700, fontSize: 11, fontFamily: 'monospace' },
-    labelBgStyle: { fill: '#064e3b', fillOpacity: 0.9, rx: 4, ry: 4 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#34d399' },
-    style: { stroke: '#34d399', strokeWidth: 1.5 },
-  },
-  {
-    id: 'e3-no',
-    source: 'node-decision',
-    sourceHandle: 'no',
-    target: 'node-proc-neg',
-    type: 'smoothstep',
-    label: 'No',
-    labelStyle: { fill: '#f87171', fontWeight: 700, fontSize: 11, fontFamily: 'monospace' },
-    labelBgStyle: { fill: '#4c0519', fillOpacity: 0.9, rx: 4, ry: 4 },
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#f87171' },
-    style: { stroke: '#f87171', strokeWidth: 1.5 },
-  },
-  {
-    id: 'e4-end',
-    source: 'node-proc-pos',
-    target: 'node-end',
-    type: 'smoothstep',
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#38bdf8' },
-    style: { stroke: '#38bdf8', strokeWidth: 1.5 },
-  },
-  {
-    id: 'e5-end',
-    source: 'node-proc-neg',
-    target: 'node-end',
-    type: 'smoothstep',
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#38bdf8' },
-    style: { stroke: '#38bdf8', strokeWidth: 1.5 },
-  },
-];
+// Diagrama inicial vacío
+const INITIAL_NODES: Node[] = [];
+const INITIAL_EDGES: Edge[] = [];
 
 interface FlowchartCanvasInnerProps {
   isExamMode: boolean;
@@ -305,6 +210,14 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({ isExamMode 
             showInteractive={false}
           />
         </ReactFlow>
+
+        {/* Mensaje sutil cuando el lienzo está vacío */}
+        {nodes.length === 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-zinc-600 space-y-2 z-10">
+            <p className="text-xs font-mono text-zinc-500 font-medium">Lienzo de Diagrama DFD Vacío</p>
+            <p className="text-[11px] text-zinc-600">Arrastra símbolos desde la paleta lateral o haz clic en ellos para empezar.</p>
+          </div>
+        )}
 
         {/* Notificación de advertencia de seguridad en el canvas */}
         {warningMessage && (
