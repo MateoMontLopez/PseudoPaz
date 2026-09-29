@@ -24,6 +24,14 @@ IDE moderno, ligero y minimalista para el aprendizaje de lógica de programació
 - **Guardias de Seguridad Académica:**
   - **Clipboard Guard:** Deshabilita copiar, pegar, arrastrar y clic derecho en el editor para exigir digitación manual.
   - **Session & Focus Guard:** Borrado efímero de código, consola y diagramas si el estudiante cambia de pestaña o ventana en Modo Examen.
+- **Módulo de Exportación a PDF Protegido (Fase 4):**
+  - Identificación única anti-copia con cálculo de huella digital criptográfica SHA-256 combinando metadatos del estudiante, código fuente, estructura DFD, timestamp y salt secreto.
+  - Generación de Código QR con payload de validación académica.
+  - Protección del PDF contra copia mediante renderizado rasterizado de alta definición (Canvas 300 DPI) para impedir selección, copia o edición de texto.
+- **Progressive Web App (PWA) y Soporte Offline (Fase 5):**
+  - Service Worker autónomo configurado con Vite PWA y Workbox con estrategia de precacheo completo de assets, Web Workers y fuentes.
+  - Botón de instalación nativa integrado en la cabecera con detección de estado online/offline en tiempo real.
+  - Funcionamiento 100% desconectado, ideal para laboratorios de informática sin conexión continua a Internet.
 
 ---
 
@@ -220,12 +228,14 @@ src/
 │   ├── editor/            # CodeEditor (CodeMirror 6) y useClipboardGuard
 │   ├── console/           # VirtualConsole (Terminal I/O) y ConsoleInput
 │   ├── pdf/               # Exportación PDF e Identificación Criptográfica (Fase 4)
+│   ├── pwa/               # Botón de Instalación y Estado Offline / Online (Fase 5)
 │   └── flowchart/         # Módulo DFD (React Flow Canvas, Símbolos ANSI y Toolbar)
 │       └── nodes/         # TerminalNode, ProcessNode, InputNode, OutputNode, DecisionNode
 ├── services/              # Criptografía SHA-256, captura de canvas y generación PDF
-├── hooks/                 # usePseudocodeRunner, useSessionGuard y usePdfExporter
+├── hooks/                 # usePseudocodeRunner, useSessionGuard, usePdfExporter y usePWAInstall
+├── serviceWorkerRegistration.ts # Registro y ciclo de vida de PWA Service Worker
 ├── App.tsx                # Orquestador de la aplicación
-└── main.tsx               # Entrada de React
+└── main.tsx               # Entrada de React y arranque del Service Worker
 ```
 
 ---
