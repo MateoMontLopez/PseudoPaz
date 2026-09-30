@@ -73,11 +73,11 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   if (!isOpen) return null;
 
   return (
-    <aside className="w-56 h-full bg-[#0d1017] border-r border-zinc-800/80 flex flex-col select-none text-zinc-300 font-sans shrink-0 transition-all duration-150">
+    <aside className="w-56 h-full bg-[var(--bg-sidebar)] border-r border-[var(--border-color)] flex flex-col select-none text-[var(--text-secondary)] font-sans shrink-0 transition-colors duration-150">
       {/* Cabecera del Explorador */}
-      <div className="h-10 px-3 flex items-center justify-between border-b border-zinc-800/80 bg-zinc-950/40 text-[11px] font-bold tracking-wider text-zinc-400">
-        <div className="flex items-center space-x-1.5 text-zinc-300">
-          <FolderGit2 className="w-3.5 h-3.5 text-sky-400" />
+      <div className="h-10 px-3 flex items-center justify-between border-b border-[var(--border-color)] bg-[var(--bg-surface-subtle)] text-[11px] font-bold tracking-wider text-[var(--text-muted)]">
+        <div className="flex items-center space-x-1.5 text-[var(--text-primary)]">
+          <FolderGit2 className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
           <span>EXPLORADOR</span>
         </div>
 
@@ -85,14 +85,14 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
           <button
             onClick={handleStartCreate}
             title="Nuevo archivo de pseudocódigo (.psc)"
-            className="p-1 hover:bg-zinc-800 text-zinc-400 hover:text-sky-300 rounded transition-colors cursor-pointer"
+            className="p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-sky-500 dark:hover:text-sky-300 rounded transition-colors cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onToggle}
             title="Cerrar panel del explorador"
-            className="p-1 hover:bg-zinc-800 text-zinc-500 hover:text-zinc-300 rounded transition-colors cursor-pointer"
+            className="p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded transition-colors cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -101,9 +101,9 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
 
       {/* Input de creación de archivo nuevo */}
       {isCreating && (
-        <div className="p-2 border-b border-zinc-800 bg-zinc-900/60">
-          <div className="flex items-center space-x-1 bg-zinc-950 border border-sky-500/60 rounded px-1.5 py-1">
-            <FileCode2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+        <div className="p-2 border-b border-[var(--border-color)] bg-[var(--bg-surface)]">
+          <div className="flex items-center space-x-1 bg-[var(--bg-app)] border border-sky-500/60 rounded px-1.5 py-1">
+            <FileCode2 className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 shrink-0" />
             <input
               type="text"
               value={newFileName}
@@ -111,32 +111,32 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
               onKeyDown={handleKeyDown}
               placeholder="nombre.psc"
               autoFocus
-              className="w-full bg-transparent text-xs text-zinc-100 outline-none font-mono"
+              className="w-full bg-transparent text-xs text-[var(--text-primary)] outline-none font-mono"
             />
             <button
               onClick={handleConfirmCreate}
-              className="p-0.5 hover:bg-zinc-800 text-emerald-400 rounded"
+              className="p-0.5 hover:bg-[var(--bg-hover)] text-emerald-500 dark:text-emerald-400 rounded"
               title="Crear"
             >
               <Check className="w-3 h-3" />
             </button>
             <button
               onClick={handleCancelCreate}
-              className="p-0.5 hover:bg-zinc-800 text-zinc-400 rounded"
+              className="p-0.5 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] rounded"
               title="Cancelar"
             >
               <X className="w-3 h-3" />
             </button>
           </div>
           {errorMessage && (
-            <p className="text-[10px] text-rose-400 mt-1 pl-1">{errorMessage}</p>
+            <p className="text-[10px] text-rose-500 dark:text-rose-400 mt-1 pl-1">{errorMessage}</p>
           )}
         </div>
       )}
 
       {/* Lista de archivos */}
       <div className="flex-1 overflow-y-auto py-1">
-        <div className="px-2 py-1 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
+        <div className="px-2 py-1 text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">
           Archivos del Algoritmo
         </div>
         <div className="space-y-0.5">
@@ -148,14 +148,14 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                 onClick={() => onSelectFile(file.id)}
                 className={`group flex items-center justify-between px-3 py-1.5 text-xs cursor-pointer transition-colors border-l-2 ${
                   isActive
-                    ? 'bg-zinc-800/80 text-sky-300 border-sky-400 font-medium'
-                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40 border-transparent'
+                    ? 'bg-[var(--bg-active)] text-sky-600 dark:text-sky-300 border-sky-500 dark:border-sky-400 font-medium'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] border-transparent'
                 }`}
               >
                 <div className="flex items-center space-x-2 truncate">
                   <FileCode2
                     className={`w-3.5 h-3.5 shrink-0 ${
-                      isActive ? 'text-sky-400' : 'text-zinc-500 group-hover:text-zinc-400'
+                      isActive ? 'text-sky-500 dark:text-sky-400' : 'text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]'
                     }`}
                   />
                   <span className="truncate font-mono text-[11.5px]">{file.name}</span>
@@ -168,7 +168,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
                       onDeleteFile(file.id);
                     }}
                     title={`Eliminar ${file.name}`}
-                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-zinc-700/60 text-zinc-500 hover:text-rose-400 rounded transition-opacity"
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--bg-hover)] text-[var(--text-muted)] hover:text-rose-500 rounded transition-opacity"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
@@ -180,7 +180,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       </div>
 
       {/* Footer del explorador */}
-      <div className="p-2.5 border-t border-zinc-800/80 text-[10px] text-zinc-500 flex items-center space-x-2 bg-zinc-950/20">
+      <div className="p-2.5 border-t border-[var(--border-color)] text-[10px] text-[var(--text-muted)] flex items-center space-x-2 bg-[var(--bg-surface-subtle)]">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
         <span className="truncate">Espacio de trabajo local (.psc)</span>
       </div>

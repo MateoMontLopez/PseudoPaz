@@ -119,17 +119,17 @@ export const SidebarToolbar: React.FC<SidebarToolbarProps> = ({
   };
 
   return (
-    <aside className="w-64 h-full bg-[#0d0d10] border-r border-zinc-800/80 flex flex-col justify-between select-none">
+    <aside className="w-64 h-full bg-[var(--bg-sidebar)] border-r border-[var(--border-color)] flex flex-col justify-between select-none transition-colors duration-150">
       {/* Sección Superior: Paleta de Figuras */}
       <div className="p-3.5 space-y-4 overflow-y-auto">
         <div>
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
+            <h3 className="text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
               Símbolos ANSI
             </h3>
-            <span className="text-[10px] text-zinc-500 font-mono">Arrastrar o Clic</span>
+            <span className="text-[10px] text-[var(--text-muted)] font-mono">Arrastrar o Clic</span>
           </div>
-          <p className="text-[11px] text-zinc-500 mt-1">
+          <p className="text-[11px] text-[var(--text-secondary)] mt-1">
             Arrastra una figura al lienzo o haz clic para agregarla.
           </p>
         </div>
@@ -141,7 +141,7 @@ export const SidebarToolbar: React.FC<SidebarToolbarProps> = ({
               draggable
               onDragStart={(e) => onDragStart(e, sym.type, sym.defaultLabel)}
               onClick={() => onAddNodeClick(sym.type, sym.defaultLabel)}
-              className={`group flex items-center justify-between p-2.5 rounded-md border border-zinc-800/90 bg-zinc-900/50 hover:bg-zinc-800/60 cursor-grab active:cursor-grabbing transition-all hover:scale-[1.01] active:scale-95 shadow-sm`}
+              className="group flex items-center justify-between p-2.5 rounded-md border border-[var(--border-color)] bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] cursor-grab active:cursor-grabbing transition-all hover:scale-[1.01] active:scale-95 shadow-xs"
             >
               <div className="flex items-center space-x-3">
                 <div className="shrink-0 flex items-center justify-center w-10">
@@ -149,42 +149,42 @@ export const SidebarToolbar: React.FC<SidebarToolbarProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center space-x-1.5">
-                    <span className="text-xs font-medium text-zinc-200 group-hover:text-white">
+                    <span className="text-xs font-medium text-[var(--text-primary)]">
                       {sym.name}
                     </span>
                   </div>
-                  <span className="text-[10px] text-zinc-500 block leading-tight">
+                  <span className="text-[10px] text-[var(--text-secondary)] block leading-tight">
                     {sym.description}
                   </span>
                 </div>
               </div>
-              <PlusCircle className="w-4 h-4 text-zinc-600 group-hover:text-zinc-300 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <PlusCircle className="w-4 h-4 text-[var(--text-muted)] group-hover:text-[var(--text-primary)] shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           ))}
         </div>
 
         {/* Guía rápida de atajos */}
-        <div className="mt-4 p-3 rounded-md bg-zinc-900/40 border border-zinc-800/60 text-[11px] text-zinc-400 space-y-1.5">
-          <div className="flex items-center space-x-1.5 text-zinc-300 font-medium">
-            <HelpCircle className="w-3.5 h-3.5 text-sky-400" />
+        <div className="mt-4 p-3 rounded-md bg-[var(--bg-surface-subtle)] border border-[var(--border-color)] text-[11px] text-[var(--text-secondary)] space-y-1.5">
+          <div className="flex items-center space-x-1.5 text-[var(--text-primary)] font-medium">
+            <HelpCircle className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
             <span>Guía de Diagramación</span>
           </div>
-          <ul className="space-y-1 text-zinc-400 list-disc list-inside text-[10.5px]">
-            <li><strong className="text-zinc-300">Doble clic</strong> en nodo para editar texto.</li>
-            <li>Arrastra desde los <strong className="text-zinc-300">puntos</strong> para conectar.</li>
-            <li>En <strong className="text-amber-400">Decisión</strong>: derecha = Sí, izquierda = No.</li>
-            <li>Selecciona y presiona <strong className="text-zinc-300">Supr</strong> para borrar.</li>
+          <ul className="space-y-1 text-[var(--text-secondary)] list-disc list-inside text-[10.5px]">
+            <li><strong className="text-[var(--text-primary)]">Doble clic</strong> en nodo para editar texto.</li>
+            <li>Arrastra desde los <strong className="text-[var(--text-primary)]">puntos</strong> para conectar.</li>
+            <li>En <strong className="text-amber-500 dark:text-amber-400">Decisión</strong>: derecha = Sí, izquierda = No.</li>
+            <li>Selecciona y presiona <strong className="text-[var(--text-primary)]">Supr</strong> para borrar.</li>
           </ul>
         </div>
       </div>
 
       {/* Sección Inferior: Controles de lienzo */}
-      <div className="p-3 border-t border-zinc-800/80 bg-zinc-950/60 space-y-2">
+      <div className="p-3 border-t border-[var(--border-color)] bg-[var(--bg-surface-subtle)] space-y-2">
         <div className="flex items-center space-x-2">
           <button
             onClick={onFitView}
             title="Ajustar y centrar diagrama a la vista"
-            className="flex-1 flex items-center justify-center space-x-1.5 py-1.5 px-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 rounded text-xs transition-colors cursor-pointer"
+            className="flex-1 flex items-center justify-center space-x-1.5 py-1.5 px-2 bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] border border-[var(--border-color)] rounded text-xs transition-colors cursor-pointer"
           >
             <Maximize2 className="w-3.5 h-3.5" />
             <span>Centrar</span>
@@ -193,14 +193,14 @@ export const SidebarToolbar: React.FC<SidebarToolbarProps> = ({
           <button
             onClick={onClearCanvas}
             title="Borrar todo el diagrama"
-            className="flex items-center justify-center space-x-1.5 py-1.5 px-2.5 bg-zinc-900 hover:bg-rose-950/50 hover:text-rose-300 hover:border-rose-900/50 text-zinc-400 border border-zinc-800 rounded text-xs transition-colors cursor-pointer"
+            className="flex items-center justify-center space-x-1.5 py-1.5 px-2.5 bg-[var(--bg-surface)] hover:bg-rose-500/10 hover:text-rose-500 hover:border-rose-500/30 text-[var(--text-secondary)] border border-[var(--border-color)] rounded text-xs transition-colors cursor-pointer"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>Limpiar</span>
           </button>
         </div>
 
-        <div className="text-[10.5px] text-center text-zinc-600 font-mono">
+        <div className="text-[10.5px] text-center text-[var(--text-muted)] font-mono">
           Módulo DFD Independiente
         </div>
       </div>

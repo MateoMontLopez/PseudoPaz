@@ -30,6 +30,7 @@ import {
   ConsoleOutputItem,
   InputPromptState,
 } from '../../hooks/usePseudocodeRunner';
+import { useTheme } from '../../hooks/useTheme';
 import {
   Play,
   Square,
@@ -75,6 +76,7 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
   onProvideInput = () => {},
   onClearConsole = () => {},
 }) => {
+  const { isDark } = useTheme();
   const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
@@ -102,15 +104,13 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
     },
   });
 
-  // Conexión interactiva entre handles con estilo de línea fluido y etiquetas dinámicas de origen
+  // Conexión interactiva entre handles con trazos coloreados sin etiquetas de texto
   const onConnect = useCallback(
     (connection: Connection) => {
       const sourceNode = nodes.find((n) => n.id === connection.source);
       const sourceHandle = connection.sourceHandle || '';
 
-      let label = 'Flujo';
       let strokeColor = '#38bdf8'; // Default sky blue
-      let bgColor = '#0c4a6e';
 
       if (sourceNode) {
         switch (sourceNode.type) {
@@ -125,55 +125,38 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
               sourceHandle.includes('left');
 
             if (isNo) {
-              label = 'No';
-              strokeColor = '#f87171'; // Rose
-              bgColor = '#4c0519';
+              strokeColor = '#f87171'; // Rose para No
             } else if (isYes) {
-              label = 'Sí';
-              strokeColor = '#34d399'; // Emerald
-              bgColor = '#064e3b';
+              strokeColor = '#34d399'; // Emerald para Sí
             } else {
-              label = 'Sí';
-              strokeColor = '#34d399'; // Emerald
-              bgColor = '#064e3b';
+              strokeColor = '#34d399'; // Emerald para Sí por defecto
             }
             break;
           }
 
           case 'input':
           case 'io': {
-            label = 'Leer';
             strokeColor = '#c084fc'; // Purple
-            bgColor = '#3b0764';
             break;
           }
 
           case 'output': {
-            label = 'Mostrar';
             strokeColor = '#22d3ee'; // Cyan
-            bgColor = '#083344';
             break;
           }
 
           case 'process': {
-            label = 'Proceso';
             strokeColor = '#38bdf8'; // Sky
-            bgColor = '#0c4a6e';
             break;
           }
 
           case 'terminal': {
-            const isFin = /fin/i.test(String(sourceNode.data?.label || ''));
-            label = isFin ? 'Fin' : 'Inicio';
             strokeColor = '#34d399'; // Emerald
-            bgColor = '#064e3b';
             break;
           }
 
           default:
-            label = 'Flujo';
             strokeColor = '#38bdf8';
-            bgColor = '#0c4a6e';
             break;
         }
       }
@@ -182,23 +165,6 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
         ...connection,
         id: `e-${connection.source}-${sourceHandle || 'def'}-${connection.target}-${Date.now()}`,
         type: 'smoothstep',
-        label,
-        labelStyle: {
-          fill: strokeColor,
-          fontWeight: 700,
-          fontSize: 10,
-          fontFamily: "'JetBrains Mono', Consolas, monospace",
-        },
-        labelBgStyle: {
-          fill: bgColor,
-          fillOpacity: 0.95,
-          rx: 4,
-          ry: 4,
-          stroke: strokeColor,
-          strokeWidth: 1,
-        },
-        labelBgPadding: [6, 3],
-        labelBgBorderRadius: 4,
         markerEnd: {
           type: MarkerType.ArrowClosed,
           color: strokeColor,
@@ -304,12 +270,20 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
       {/* Área del Lienzo React Flow + Barra de Acciones + Consola Embebida */}
       <div className="flex-1 h-full flex flex-col relative overflow-hidden">
         {/* Barra superior de acciones del Lienzo DFD */}
-        <div className="h-10 px-4 bg-[#0d1017] border-b border-zinc-800/80 flex items-center justify-between z-20 shrink-0 select-none">
-          <div className="flex items-center space-x-2 text-xs font-mono text-zinc-400">
-            <span className="text-zinc-500">workspace /</span>
-            <span className="text-zinc-200 font-medium">diagrama_flujo.dfd</span>
-            <span className="text-zinc-700">|</span>
-            <span className="text-[11px] text-zinc-500">
+        <div
+          className={`h-10 px-4 border-b flex items-center justify-between z-20 shrink-0 select-none transition-colors duration-150 ${
+            isDark
+              ? 'bg-[#0d1017] border-zinc-800/80 text-zinc-300'
+              : 'bg-white border-slate-200 text-slate-700'
+          }`}
+        >
+          <div className="flex items-center space-x-2 text-xs font-mono">
+            <span className={isDark ? 'text-zinc-500' : 'text-slate-400'}>workspace /</span>
+            <span className={`font-medium ${isDark ? 'text-zinc-200' : 'text-slate-800'}`}>
+              diagrama_flujo.dfd
+            </span>
+            <span className={isDark ? 'text-zinc-700' : 'text-slate-300'}>|</span>
+            <span className={`text-[11px] ${isDark ? 'text-zinc-500' : 'text-slate-500'}`}>
               {nodes.length} {nodes.length === 1 ? 'nodo' : 'nodos'}, {edges.length}{' '}
               {edges.length === 1 ? 'conexión' : 'conexiones'}
             </span>
@@ -321,7 +295,7 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
               <button
                 onClick={handleRunDFD}
                 title="Convertir DFD a código ejecutable y correr en Web Worker"
-                className="flex items-center space-x-1.5 px-3 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded text-xs font-semibold transition-all shadow-md shadow-emerald-950/40 active:scale-95 cursor-pointer"
+                className="flex items-center space-x-1.5 px-3 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded text-xs font-semibold transition-all shadow-md shadow-emerald-950/20 active:scale-95 cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
                 <span>Ejecutar DFD</span>
@@ -330,7 +304,7 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
               <button
                 onClick={onStop}
                 title="Detener ejecución del DFD"
-                className="flex items-center space-x-1.5 px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded text-xs font-semibold transition-all shadow-md shadow-rose-950/40 active:scale-95 cursor-pointer"
+                className="flex items-center space-x-1.5 px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded text-xs font-semibold transition-all shadow-md shadow-rose-950/20 active:scale-95 cursor-pointer"
               >
                 <Square className="w-3.5 h-3.5 fill-current" />
                 <span>Detener</span>
@@ -343,14 +317,20 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
               title={isConsoleOpen ? 'Ocultar consola de salida' : 'Mostrar consola de salida'}
               className={`flex items-center space-x-1 px-2.5 py-1 rounded text-xs transition-colors cursor-pointer border ${
                 isConsoleOpen
-                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/40'
-                  : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border-zinc-800'
+                  ? 'bg-sky-500/20 text-sky-600 dark:text-sky-300 border-sky-500/40'
+                  : isDark
+                  ? 'bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border-zinc-800'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-300'
               }`}
             >
               <Terminal className="w-3.5 h-3.5" />
               <span>Consola</span>
               {outputs.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.2 rounded-full bg-zinc-800 text-[10px] text-zinc-300 font-mono">
+                <span
+                  className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+                    isDark ? 'bg-zinc-800 text-zinc-300' : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
                   {outputs.length}
                 </span>
               )}
@@ -382,27 +362,35 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
             snapToGrid
             snapGrid={[15, 15]}
             deleteKeyCode={['Backspace', 'Delete']}
-            className="bg-[#09090b]"
+            className={isDark ? 'bg-[#09090b]' : 'bg-[#f8fafc]'}
           >
             <Background
-              color="#27272a"
+              color={isDark ? '#27272a' : '#cbd5e1'}
               gap={18}
               size={1.5}
               variant={BackgroundVariant.Dots}
             />
             <Controls
-              className="!bg-zinc-900 !border-zinc-800 !rounded-md !shadow-lg [&>button]:!bg-zinc-900 [&>button]:!border-zinc-800 [&>button]:!text-zinc-300 hover:[&>button]:!bg-zinc-800"
+              className={
+                isDark
+                  ? '!bg-zinc-900 !border-zinc-800 !rounded-md !shadow-lg [&>button]:!bg-zinc-900 [&>button]:!border-zinc-800 [&>button]:!text-zinc-300 hover:[&>button]:!bg-zinc-800'
+                  : '!bg-white !border-slate-300 !rounded-md !shadow-lg [&>button]:!bg-white [&>button]:!border-slate-300 [&>button]:!text-slate-700 hover:[&>button]:!bg-slate-100'
+              }
               showInteractive={false}
             />
           </ReactFlow>
 
           {/* Mensaje sutil cuando el lienzo está vacío */}
           {nodes.length === 0 && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-zinc-600 space-y-2 z-10">
-              <p className="text-xs font-mono text-zinc-500 font-medium">
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none space-y-2 z-10">
+              <p
+                className={`text-xs font-mono font-medium ${
+                  isDark ? 'text-zinc-500' : 'text-slate-400'
+                }`}
+              >
                 Lienzo de Diagrama DFD Vacío
               </p>
-              <p className="text-[11px] text-zinc-600">
+              <p className={`text-[11px] ${isDark ? 'text-zinc-600' : 'text-slate-400'}`}>
                 Arrastra símbolos desde la paleta lateral o haz clic en ellos para empezar.
               </p>
             </div>
@@ -410,7 +398,7 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
 
           {/* Notificación de advertencia o error en el canvas */}
           {warningMessage && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center space-x-2 px-3.5 py-2 bg-amber-500/15 border border-amber-500/40 text-amber-300 rounded-md text-xs shadow-2xl backdrop-blur-md animate-in fade-in duration-150">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center space-x-2 px-3.5 py-2 bg-amber-500/15 border border-amber-500/40 text-amber-500 dark:text-amber-300 rounded-md text-xs shadow-2xl backdrop-blur-md animate-in fade-in duration-150">
               <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
               <span className="font-medium">{warningMessage}</span>
             </div>
@@ -419,7 +407,11 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
 
         {/* Panel inferior embebido de Consola Virtual I/O para ejecución directa desde DFD */}
         {isConsoleOpen && (
-          <div className="h-56 w-full border-t border-zinc-800/80 bg-[#0d0d10] flex flex-col shrink-0 z-20 animate-in slide-in-from-bottom-4 duration-150">
+          <div
+            className={`h-56 w-full border-t flex flex-col shrink-0 z-20 animate-in slide-in-from-bottom-4 duration-150 ${
+              isDark ? 'border-zinc-800/80 bg-[#0d0d10]' : 'border-slate-200 bg-white'
+            }`}
+          >
             <VirtualConsole
               outputs={outputs}
               status={status}

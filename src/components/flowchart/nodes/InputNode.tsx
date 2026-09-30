@@ -72,13 +72,13 @@ export const InputNode: React.FC<NodeProps<InputNodeType | IONodeType>> = ({
       >
         <polygon
           points="18,3 157,3 142,49 3,49"
-          fill={selected ? 'rgba(88, 28, 135, 0.45)' : 'rgba(24, 24, 27, 0.92)'}
+          fill={selected ? 'rgba(192, 132, 252, 0.25)' : 'var(--node-bg)'}
           stroke={selected ? '#c084fc' : '#9333ea'}
           strokeWidth={selected ? 2 : 1.5}
           style={{
             filter: selected
               ? 'drop-shadow(0 0 8px rgba(192, 132, 252, 0.5))'
-              : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))',
+              : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))',
             transition: 'all 0.15s ease-in-out',
           }}
         />
@@ -100,10 +100,10 @@ export const InputNode: React.FC<NodeProps<InputNodeType | IONodeType>> = ({
                 setIsEditing(false);
               }
             }}
-            className="bg-transparent text-purple-200 text-xs font-mono font-medium text-center outline-none w-full border-b border-purple-400/60"
+            className="bg-transparent text-purple-700 dark:text-purple-200 text-xs font-mono font-medium text-center outline-none w-full border-b border-purple-400/60"
           />
         ) : (
-          <span className="text-xs font-mono font-medium text-purple-200 block break-words leading-tight">
+          <span className="text-xs font-mono font-medium text-purple-700 dark:text-purple-200 block break-words leading-tight">
             {text}
           </span>
         )}

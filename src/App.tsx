@@ -17,9 +17,12 @@ import {
   loadStoredFiles,
   saveStoredFiles,
 } from './types/workspace';
+import { useThemeProvider, ThemeContext } from './hooks/useTheme';
 import { AlertTriangle, X } from 'lucide-react';
 
 export const App: React.FC = () => {
+  const themeValue = useThemeProvider();
+
   // Estado de modo principal: 'code' (Editor) o 'flowchart' (DFD React Flow)
   const [mode, setMode] = useState<AppMode>('code');
 
@@ -192,8 +195,9 @@ export const App: React.FC = () => {
   const openFiles = files.filter((f) => openFileIds.includes(f.id));
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-[#09090b] text-zinc-100 overflow-hidden font-sans">
-      {/* Zona 1: Header Principal Unificado */}
+    <ThemeContext.Provider value={themeValue}>
+      <div className="flex flex-col h-screen w-screen bg-[var(--bg-app)] text-[var(--text-primary)] overflow-hidden font-sans transition-colors duration-150">
+        {/* Zona 1: Header Principal Unificado */}
       <Header
         mode={mode}
         onModeChange={setMode}
@@ -314,6 +318,7 @@ export const App: React.FC = () => {
         code={code}
       />
     </div>
+    </ThemeContext.Provider>
   );
 };
 

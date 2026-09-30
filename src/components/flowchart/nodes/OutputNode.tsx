@@ -66,13 +66,13 @@ export const OutputNode: React.FC<NodeProps<OutputNodeType>> = ({ id, data, sele
       >
         <path
           d="M 2 2 L 158 2 L 158 46 C 135 36, 105 36, 80 46 C 55 56, 25 56, 2 46 Z"
-          fill={selected ? 'rgba(8, 47, 73, 0.75)' : 'rgba(8, 47, 73, 0.5)'}
+          fill={selected ? 'rgba(34, 211, 238, 0.25)' : 'var(--node-bg)'}
           stroke={selected ? '#22d3ee' : '#0891b2'}
           strokeWidth={selected ? 2 : 1.5}
           style={{
             filter: selected
               ? 'drop-shadow(0 0 8px rgba(34, 211, 238, 0.5))'
-              : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))',
+              : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))',
             transition: 'all 0.15s ease-in-out',
           }}
         />
@@ -94,10 +94,10 @@ export const OutputNode: React.FC<NodeProps<OutputNodeType>> = ({ id, data, sele
                 setIsEditing(false);
               }
             }}
-            className="bg-transparent text-cyan-200 text-xs font-mono font-medium text-center outline-none w-full border-b border-cyan-400/60"
+            className="bg-transparent text-cyan-700 dark:text-cyan-200 text-xs font-mono font-medium text-center outline-none w-full border-b border-cyan-400/60"
           />
         ) : (
-          <span className="text-xs font-mono font-medium text-cyan-200 block break-words leading-tight">
+          <span className="text-xs font-mono font-medium text-cyan-700 dark:text-cyan-200 block break-words leading-tight">
             {text}
           </span>
         )}

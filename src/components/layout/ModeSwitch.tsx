@@ -10,13 +10,13 @@ interface ModeSwitchProps {
 
 export const ModeSwitch: React.FC<ModeSwitchProps> = ({ mode, onModeChange }) => {
   return (
-    <div className="flex items-center p-0.5 bg-zinc-900 border border-zinc-800 rounded-md select-none font-mono text-xs">
+    <div className="flex items-center p-0.5 bg-[var(--bg-surface-subtle)] border border-[var(--border-color)] rounded-md select-none font-mono text-xs transition-colors">
       <button
         onClick={() => onModeChange('code')}
         className={`flex items-center space-x-1.5 px-3 py-1 rounded transition-all cursor-pointer ${
           mode === 'code'
-            ? 'bg-zinc-800 text-sky-400 font-medium shadow-xs'
-            : 'text-zinc-400 hover:text-zinc-200'
+            ? 'bg-[var(--bg-active)] text-sky-500 dark:text-sky-400 font-semibold shadow-xs'
+            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
         }`}
         title="Modo Editor de Pseudocódigo y Consola"
       >
@@ -28,8 +28,8 @@ export const ModeSwitch: React.FC<ModeSwitchProps> = ({ mode, onModeChange }) =>
         onClick={() => onModeChange('flowchart')}
         className={`flex items-center space-x-1.5 px-3 py-1 rounded transition-all cursor-pointer ${
           mode === 'flowchart'
-            ? 'bg-zinc-800 text-emerald-400 font-medium shadow-xs'
-            : 'text-zinc-400 hover:text-zinc-200'
+            ? 'bg-[var(--bg-active)] text-emerald-600 dark:text-emerald-400 font-semibold shadow-xs'
+            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
         }`}
         title="Modo Diagrama de Flujo (DFD) Independiente"
       >

@@ -93,9 +93,9 @@ export const IDELayout: React.FC<IDELayoutProps> = ({
             onMouseDown={handleMouseDown}
             onDoubleClick={handleDoubleClick}
             title="Arrastra para redimensionar (doble clic para centrar 50/50)"
-            className="w-1.5 hover:w-2 -mx-0.5 z-10 h-full bg-zinc-950 hover:bg-sky-500/50 active:bg-sky-500 cursor-col-resize transition-all flex items-center justify-center group shrink-0 border-x border-zinc-800/80"
+            className="w-1.5 hover:w-2 -mx-0.5 z-10 h-full bg-[var(--bg-app)] hover:bg-sky-500/50 active:bg-sky-500 cursor-col-resize transition-all flex items-center justify-center group shrink-0 border-x border-[var(--border-color)]"
           >
-            <div className="w-[1px] h-8 bg-zinc-700 group-hover:bg-sky-400 group-active:bg-sky-300 rounded"></div>
+            <div className="w-[1px] h-8 bg-[var(--border-color)] group-hover:bg-sky-400 group-active:bg-sky-300 rounded"></div>
           </div>
 
           {/* Zona 4: Consola Virtual (I/O) */}

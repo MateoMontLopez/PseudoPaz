@@ -2,8 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+.theme-dark,
+[data-theme="dark"] {
   color-scheme: dark;
+  --bg-app: #09090b;
+  --bg-header: #0c0f16;
+  --bg-sidebar: #0d1017;
+  --bg-panel: #09090b;
+  --bg-surface: #121215;
+  --bg-surface-subtle: #18181b;
+  --bg-hover: #1f1f23;
+  --bg-active: #141824;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --border-color: #27272a;
+  --border-subtle: #18181b;
+  --node-bg: rgba(24, 24, 27, 0.92);
+  --node-border: #3f3f46;
+  --flow-bg: #09090b;
+  --flow-dots: #27272a;
+  --cm-bg: #09090b;
+  --cm-gutter-bg: #09090b;
+  --cm-gutter-color: #52525b;
+  --cm-active-line-gutter: #18181b;
+  --cm-active-line: rgba(255, 255, 255, 0.02);
+  --cm-gutter-border: #18181b;
+  --console-bg: #0d0d10;
+  --console-header-bg: rgba(24, 24, 27, 0.6);
+  --scrollbar-thumb: #27272a;
+  --scrollbar-thumb-hover: #3f3f46;
+  --syntax-keyword: #38bdf8;
+  --syntax-type: #34d399;
+  --syntax-logic: #c084fc;
+  --syntax-bool: #f472b6;
+  --syntax-string: #fbbf24;
+  --syntax-number: #67e8f9;
+  --syntax-operator: #f87171;
+  --syntax-comment: #71717a;
+  --syntax-variable: #f4f4f5;
+  --syntax-punctuation: #a1a1aa;
+}
+
+.theme-light,
+[data-theme="light"] {
+  color-scheme: light;
+  --bg-app: #f8fafc;
+  --bg-header: #ffffff;
+  --bg-sidebar: #f8fafc;
+  --bg-panel: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-surface-subtle: #f1f5f9;
+  --bg-hover: #f1f5f9;
+  --bg-active: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
+  --border-subtle: #cbd5e1;
+  --node-bg: rgba(255, 255, 255, 0.96);
+  --node-border: #cbd5e1;
+  --flow-bg: #f8fafc;
+  --flow-dots: #cbd5e1;
+  --cm-bg: #ffffff;
+  --cm-gutter-bg: #f8fafc;
+  --cm-gutter-color: #94a3b8;
+  --cm-active-line-gutter: #f1f5f9;
+  --cm-active-line: rgba(0, 0, 0, 0.03);
+  --cm-gutter-border: #e2e8f0;
+  --console-bg: #ffffff;
+  --console-header-bg: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+  --syntax-keyword: #0284c7;
+  --syntax-type: #059669;
+  --syntax-logic: #7c3aed;
+  --syntax-bool: #db2777;
+  --syntax-string: #d97706;
+  --syntax-number: #0891b2;
+  --syntax-operator: #e11d48;
+  --syntax-comment: #64748b;
+  --syntax-variable: #0f172a;
+  --syntax-punctuation: #475569;
 }
 
 body {
@@ -11,10 +92,11 @@ body {
   padding: 0;
   height: 100vh;
   width: 100vw;
-  background-color: #09090b;
-  color: #f4f4f5;
+  background-color: var(--bg-app);
+  color: var(--text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Custom scrollbars */
@@ -28,12 +110,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* CodeMirror 6 custom styling */
@@ -42,7 +124,8 @@ body {
   font-family: 'JetBrains Mono', Consolas, monospace !important;
   font-size: 13.5px !important;
   line-height: 1.6 !important;
-  background-color: #09090b !important;
+  background-color: var(--cm-bg) !important;
+  color: var(--text-primary) !important;
 }
 
 .cm-editor .cm-scroller {
@@ -51,19 +134,19 @@ body {
 }
 
 .cm-editor .cm-gutters {
-  background-color: #09090b !important;
-  color: #52525b !important;
-  border-right: 1px solid #18181b !important;
+  background-color: var(--cm-gutter-bg) !important;
+  color: var(--cm-gutter-color) !important;
+  border-right: 1px solid var(--cm-gutter-border) !important;
   padding-right: 4px;
 }
 
 .cm-editor .cm-activeLineGutter {
-  background-color: #18181b !important;
-  color: #a1a1aa !important;
+  background-color: var(--cm-active-line-gutter) !important;
+  color: var(--text-primary) !important;
 }
 
 .cm-editor .cm-activeLine {
-  background-color: rgba(255, 255, 255, 0.02) !important;
+  background-color: var(--cm-active-line) !important;
 }
 
 .cm-editor.cm-focused {
@@ -107,4 +190,3 @@ body {
 .react-flow__edge:hover .react-flow__edge-path {
   stroke-width: 2.5 !important;
 }
-

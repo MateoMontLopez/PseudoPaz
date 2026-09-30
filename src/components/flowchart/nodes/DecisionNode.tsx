@@ -67,15 +67,15 @@ export const DecisionNode: React.FC<NodeProps<DecisionNodeType>> = ({ id, data, 
           points="85,3 167,45 85,87 3,45"
           className={`transition-colors duration-150 ${
             selected
-              ? 'fill-amber-950/40 stroke-amber-400 stroke-2'
-              : 'fill-zinc-900/90 stroke-amber-600/70 group-hover:stroke-amber-500 stroke-[1.5]'
+              ? 'fill-amber-500/20 stroke-amber-400 stroke-2'
+              : 'fill-[var(--node-bg)] stroke-amber-500/70 group-hover:stroke-amber-500 stroke-[1.5]'
           }`}
         />
       </svg>
 
       {/* Badge identificador del camino 'No' en la izquierda */}
       <div className="absolute -left-6 top-1/2 -translate-y-1/2 flex items-center pointer-events-none select-none">
-        <span className="text-[10px] font-mono font-bold text-rose-400 bg-rose-950/90 px-1 py-0.5 rounded border border-rose-800/60 shadow-xs mr-1">
+        <span className="text-[10px] font-mono font-bold text-rose-500 dark:text-rose-400 bg-rose-500/10 dark:bg-rose-950/90 px-1 py-0.5 rounded border border-rose-500/30 dark:border-rose-800/60 shadow-xs mr-1">
           No
         </span>
       </div>
@@ -96,10 +96,10 @@ export const DecisionNode: React.FC<NodeProps<DecisionNodeType>> = ({ id, data, 
                 setIsEditing(false);
               }
             }}
-            className="bg-transparent text-amber-200 text-xs font-mono font-medium text-center outline-none w-full border-b border-amber-400/50"
+            className="bg-transparent text-amber-700 dark:text-amber-200 text-xs font-mono font-medium text-center outline-none w-full border-b border-amber-400/50"
           />
         ) : (
-          <span className="text-xs font-mono font-medium text-amber-300 block break-words leading-tight">
+          <span className="text-xs font-mono font-medium text-amber-700 dark:text-amber-300 block break-words leading-tight">
             {text}
           </span>
         )}
@@ -107,7 +107,7 @@ export const DecisionNode: React.FC<NodeProps<DecisionNodeType>> = ({ id, data, 
 
       {/* Badge identificador del camino 'Sí' en la derecha */}
       <div className="absolute -right-6 top-1/2 -translate-y-1/2 flex items-center pointer-events-none select-none">
-        <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-1 py-0.5 rounded border border-emerald-800/60 shadow-xs ml-1">
+        <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-950/80 px-1 py-0.5 rounded border border-emerald-500/30 dark:border-emerald-800/60 shadow-xs ml-1">
           Sí
         </span>
       </div>

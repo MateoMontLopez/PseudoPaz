@@ -18,7 +18,7 @@ export const EditorTabs: React.FC<EditorTabsProps> = ({
   onNewFile,
 }) => {
   return (
-    <div className="h-9 bg-[#0b0d13] border-b border-zinc-800/80 flex items-stretch select-none overflow-x-auto scrollbar-none">
+    <div className="h-9 bg-[var(--bg-surface-subtle)] border-b border-[var(--border-color)] flex items-stretch select-none overflow-x-auto scrollbar-none transition-colors duration-150">
       <div className="flex items-stretch min-w-0">
         {openFiles.map((file) => {
           const isActive = file.id === activeFileId;
@@ -26,20 +26,20 @@ export const EditorTabs: React.FC<EditorTabsProps> = ({
             <div
               key={file.id}
               onClick={() => onSelectTab(file.id)}
-              className={`group relative flex items-center space-x-2 px-3.5 border-r border-zinc-800/60 text-xs cursor-pointer transition-colors whitespace-nowrap min-w-[120px] max-w-[200px] ${
+              className={`group relative flex items-center space-x-2 px-3.5 border-r border-[var(--border-color)] text-xs cursor-pointer transition-colors whitespace-nowrap min-w-[120px] max-w-[200px] ${
                 isActive
-                  ? 'bg-[#141824] text-zinc-100 font-medium'
-                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-[#11151e]'
+                  ? 'bg-[var(--bg-app)] text-[var(--text-primary)] font-medium'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'
               }`}
             >
               {/* Línea indicadora activa superior o inferior */}
               {isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-sky-400" />
+                <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-sky-500 dark:bg-sky-400" />
               )}
 
               <FileCode2
                 className={`w-3.5 h-3.5 shrink-0 ${
-                  isActive ? 'text-sky-400' : 'text-zinc-500 group-hover:text-zinc-400'
+                  isActive ? 'text-sky-500 dark:text-sky-400' : 'text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]'
                 }`}
               />
 
@@ -52,7 +52,7 @@ export const EditorTabs: React.FC<EditorTabsProps> = ({
                     onCloseTab(file.id);
                   }}
                   title={`Cerrar ${file.name}`}
-                  className="ml-auto p-0.5 rounded text-zinc-500 hover:text-zinc-200 hover:bg-zinc-700/60 opacity-60 group-hover:opacity-100 transition-opacity"
+                  className="ml-auto p-0.5 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] opacity-60 group-hover:opacity-100 transition-opacity"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -65,7 +65,7 @@ export const EditorTabs: React.FC<EditorTabsProps> = ({
       <button
         onClick={onNewFile}
         title="Crear nuevo archivo .psc"
-        className="px-2.5 flex items-center text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800/40 transition-colors"
+        className="px-2.5 flex items-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
       >
         <Plus className="w-3.5 h-3.5" />
       </button>

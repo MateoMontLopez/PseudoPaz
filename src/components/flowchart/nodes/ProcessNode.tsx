@@ -45,13 +45,13 @@ export const ProcessNode: React.FC<NodeProps<ProcessNodeType>> = ({ id, data, se
       style={{ background: 'transparent' }}
       className={`relative group px-5 py-3 rounded-md border transition-all duration-150 select-none shadow-md min-w-[130px] max-w-[240px] text-center cursor-pointer ${
         selected
-          ? 'border-sky-400 bg-sky-950/40 ring-2 ring-sky-500/30'
-          : 'border-sky-700/60 bg-zinc-900/90 hover:border-sky-500'
+          ? 'border-sky-500 bg-sky-500/20 ring-2 ring-sky-500/40'
+          : 'border-sky-600/70 dark:border-sky-700/60 bg-[var(--node-bg)] hover:border-sky-500'
       }`}
     >
       {/* 4 Handles Source y 4 Handles Target (Top, Bottom, Left, Right) */}
       <NodeHandles
-        color="#38bdf8"
+        color="#0284c7"
         topOffset={{ target: '40%', source: '60%' }}
         bottomOffset={{ target: '40%', source: '60%' }}
         leftOffset={{ target: '35%', source: '65%' }}
@@ -72,10 +72,10 @@ export const ProcessNode: React.FC<NodeProps<ProcessNodeType>> = ({ id, data, se
               setIsEditing(false);
             }
           }}
-          className="bg-transparent text-zinc-100 text-xs font-mono font-medium text-center outline-none w-full border-b border-sky-400/50"
+          className="bg-transparent text-[var(--text-primary)] text-xs font-mono font-medium text-center outline-none w-full border-b border-sky-400/50"
         />
       ) : (
-        <span className="text-xs font-mono font-medium text-zinc-200 block break-words">
+        <span className="text-xs font-mono font-medium text-[var(--text-primary)] block break-words">
           {text}
         </span>
       )}

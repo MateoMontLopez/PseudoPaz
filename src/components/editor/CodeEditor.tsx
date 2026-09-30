@@ -153,7 +153,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           EditorView.theme({
             '&': {
               height: '100%',
-              backgroundColor: '#09090b',
+              backgroundColor: 'var(--cm-bg)',
             },
             '.cm-content': {
               caretColor: '#38bdf8',
@@ -166,15 +166,16 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
               backgroundColor: 'rgba(56, 189, 248, 0.2) !important',
             },
             '.cm-tooltip-autocomplete': {
-              backgroundColor: '#121216',
-              border: '1px solid #27272a',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-color)',
               borderRadius: '6px',
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
+              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.25)',
               fontFamily: "'JetBrains Mono', monospace",
               fontSize: '12px',
+              color: 'var(--text-primary)',
             },
             '.cm-tooltip-autocomplete ul li[aria-selected]': {
-              backgroundColor: '#1e293b',
+              backgroundColor: 'var(--bg-hover)',
               color: '#38bdf8',
             },
           }),
@@ -212,33 +213,33 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     return (
       <div
         ref={containerRef}
-        className="relative flex flex-col h-full w-full bg-[#09090b] overflow-hidden select-text"
+        className="relative flex flex-col h-full w-full bg-[var(--cm-bg)] overflow-hidden select-text transition-colors duration-150"
       >
         {/* Barra superior de información del editor */}
-        <div className="flex items-center justify-between px-3.5 py-1.5 bg-zinc-950/80 border-b border-zinc-800/80 select-none text-xs">
+        <div className="flex items-center justify-between px-3.5 py-1.5 bg-[var(--bg-surface-subtle)] border-b border-[var(--border-color)] select-none text-xs">
           <div className="flex items-center space-x-2">
-            <span className="text-zinc-500 font-mono text-[11px]">workspace /</span>
-            <span className="font-mono font-medium text-zinc-300 text-xs">{filename}</span>
+            <span className="text-[var(--text-muted)] font-mono text-[11px]">workspace /</span>
+            <span className="font-mono font-medium text-[var(--text-primary)] text-xs">{filename}</span>
           </div>
 
-          <div className="flex items-center space-x-3 text-[11px] text-zinc-500 font-mono">
+          <div className="flex items-center space-x-3 text-[11px] text-[var(--text-muted)] font-mono">
             <span>
               Ln {cursorPos.line}, Col {cursorPos.col}
             </span>
-            <span className="text-zinc-800">|</span>
+            <span className="text-[var(--border-color)]">|</span>
             <span>
               {lineCount} {lineCount === 1 ? 'línea' : 'líneas'}
             </span>
-            <span className="text-zinc-800">|</span>
+            <span className="text-[var(--border-color)]">|</span>
             <span>UTF-8</span>
             {isClipboardGuardEnabled && (
               <>
-                <span className="text-zinc-800">|</span>
+                <span className="text-[var(--border-color)]">|</span>
                 <span
-                  className="text-amber-400/90 flex items-center gap-1.5"
+                  className="text-amber-500 dark:text-amber-400/90 flex items-center gap-1.5"
                   title="Pegado, arrastre y menú contextual bloqueados con fines pedagógicos"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400"></span>
                   Anti-Paste
                 </span>
               </>

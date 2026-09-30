@@ -43,15 +43,15 @@ export const ConsoleInput: React.FC<ConsoleInputProps> = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex items-center gap-2 mt-2 p-2 bg-zinc-900/90 border border-sky-500/30 rounded-md font-mono text-xs shadow-inner"
+      className="flex items-center gap-2 mt-2 p-2 bg-[var(--bg-surface)] border border-sky-500/40 rounded-md font-mono text-xs shadow-inner"
     >
-      <div className="flex items-center gap-1.5 shrink-0 text-sky-400 select-none">
+      <div className="flex items-center gap-1.5 shrink-0 text-sky-600 dark:text-sky-400 select-none">
         <span className="font-bold text-sky-500">?</span>
         <span>{variableName}</span>
-        <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-950/70 border border-sky-800/60 text-sky-300 font-sans uppercase">
+        <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/10 border border-sky-500/30 text-sky-600 dark:text-sky-300 font-sans uppercase">
           {expectedType}
         </span>
-        <span className="text-zinc-600">:</span>
+        <span className="text-[var(--text-muted)]">:</span>
       </div>
 
       <input
@@ -62,7 +62,7 @@ export const ConsoleInput: React.FC<ConsoleInputProps> = ({
         onKeyDown={handleKeyDown}
         disabled={disabled}
         placeholder={`Ingrese un valor de tipo ${expectedType}...`}
-        className="flex-1 bg-transparent text-zinc-100 placeholder-zinc-600 outline-none focus:outline-none px-1"
+        className="flex-1 bg-transparent text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:outline-none px-1"
         autoComplete="off"
         spellCheck={false}
       />
@@ -71,7 +71,7 @@ export const ConsoleInput: React.FC<ConsoleInputProps> = ({
         type="submit"
         disabled={disabled}
         title="Enviar respuesta (Enter)"
-        className="shrink-0 flex items-center gap-1 px-2 py-1 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 rounded text-[11px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed select-none"
+        className="shrink-0 flex items-center gap-1 px-2 py-1 bg-sky-500/20 hover:bg-sky-500/30 text-sky-600 dark:text-sky-300 border border-sky-500/40 rounded text-[11px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed select-none cursor-pointer"
       >
         <span>Enviar</span>
         <CornerDownLeft className="w-3 h-3" />

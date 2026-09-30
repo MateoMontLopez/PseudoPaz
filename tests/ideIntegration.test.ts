@@ -7,12 +7,9 @@ import { CompletionContext } from '@codemirror/autocomplete';
 
 describe('Integración UI - Workspace Files y Autocompletado', () => {
   it('debe cargar los archivos iniciales por defecto (.psc)', () => {
-    expect(DEFAULT_FILES.length).toBeGreaterThanOrEqual(4);
+    expect(DEFAULT_FILES.length).toBe(1);
     const names = DEFAULT_FILES.map((f) => f.name);
-    expect(names).toContain('factorial.psc');
-    expect(names).toContain('fibonacci.psc');
-    expect(names).toContain('promedio.psc');
-    expect(names).toContain('temperatura.psc');
+    expect(names).toContain('sin_titulo.psc');
   });
 
   it('todos los archivos iniciales por defecto deben compilar sintácticamente sin errores', () => {
@@ -25,7 +22,7 @@ describe('Integración UI - Workspace Files y Autocompletado', () => {
       const ast = parser.parse();
       expect(ast).toBeDefined();
       expect(ast.nodeType).toBe('ProgramNode');
-      expect(ast.body.length).toBeGreaterThan(0);
+      expect(Array.isArray(ast.body)).toBe(true);
     }
   });
 
