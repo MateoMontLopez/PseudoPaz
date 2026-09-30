@@ -292,7 +292,17 @@ export const App: React.FC = () => {
               : 'opacity-0 pointer-events-none fixed -left-[9999px] w-[1280px] h-[800px]'
           }`}
         >
-          <FlowchartCanvas isExamMode={isGuardEnabled} />
+          <FlowchartCanvas
+            isExamMode={isGuardEnabled}
+            onRunCode={run}
+            onStop={stop}
+            status={status}
+            outputs={outputs}
+            inputPrompt={inputPrompt}
+            executionTimeMs={executionTimeMs}
+            onProvideInput={provideInput}
+            onClearConsole={clearConsole}
+          />
         </div>
       </div>
 

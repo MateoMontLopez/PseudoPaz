@@ -79,3 +79,32 @@ body {
 .animate-cursor {
   animation: pulseCursor 1s step-end infinite;
 }
+
+/* React Flow custom styling - eliminate default white background and borders */
+.react-flow__node {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.react-flow__node-input,
+.react-flow__node-output,
+.react-flow__node-default {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  color: inherit !important;
+  width: auto !important;
+}
+
+.react-flow__connection-path {
+  stroke: #38bdf8 !important;
+  stroke-width: 2 !important;
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 2.5 !important;
+}
+
