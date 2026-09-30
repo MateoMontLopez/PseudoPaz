@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="112" fill="#0f172a" />
+  <rect x="16" y="16" width="480" height="480" rx="96" stroke="url(#borderGrad)" stroke-width="12" />
+  <defs>
+    <linearGradient id="borderGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <linearGradient id="lambdaGrad" x1="120" y1="80" x2="380" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#34d399" />
+    </linearGradient>
+  </defs>
+  <!-- Símbolo Lambda estilizado -->
+  <path
+    d="M 170 120 L 330 400 M 240 245 L 150 400"
+    stroke="url(#lambdaGrad)"
+    stroke-width="52"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

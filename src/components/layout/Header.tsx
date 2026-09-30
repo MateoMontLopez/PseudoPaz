@@ -2,6 +2,7 @@ import React from 'react';
 import { Play, Square, RotateCcw, ShieldCheck, ShieldAlert, Cpu, FileDown } from 'lucide-react';
 import { RunnerStatus } from '../../hooks/usePseudocodeRunner';
 import { ModeSwitch, AppMode } from './ModeSwitch';
+import { InstallPWAButton } from '../pwa/InstallPWAButton';
 
 interface HeaderProps {
   mode: AppMode;
@@ -158,10 +159,13 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </button>
 
+        {/* Instalación PWA y Estado Offline */}
+        <InstallPWAButton />
+
         {/* Sandbox badge */}
         <div className="hidden lg:flex items-center space-x-1 text-[11px] text-zinc-500 font-mono">
           <Cpu className="w-3 h-3 text-zinc-600" />
-          <span>Fase 3</span>
+          <span>PWA v5</span>
         </div>
       </div>
     </header>
