@@ -33,7 +33,7 @@ export class ExecutionController {
   constructor(options: ExecutionControllerOptions) {
     this.workerFactory = options.workerFactory;
     this.callbacks = options.callbacks;
-    this.timeoutMs = options.timeoutMs ?? 3000;
+    this.timeoutMs = options.timeoutMs ?? 10000;
   }
 
   /**
@@ -100,6 +100,8 @@ export class ExecutionController {
 
     if (this.worker) {
       try {
+        this.worker.onmessage = null;
+        this.worker.onerror = null;
         const termMsg: MainToWorkerMessage = { type: 'TERMINATE' };
         this.worker.postMessage(termMsg);
         this.worker.terminate();

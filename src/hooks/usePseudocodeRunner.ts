@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
-import { ExecutionController } from '../engine/worker/ExecutionController';
+import { useCallback, useEffect, useState } from 'react';
+import { interpreterWorkerService } from '../services/interpreterWorker.service';
 import { WorkerExecutionError } from '../engine/worker/worker.protocol';
 import { DataType } from '../engine/parser/ast';
 
@@ -19,13 +19,17 @@ export interface InputPromptState {
   expectedType: DataType;
 }
 
+/**
+ * Hook para la gestión del flujo de ejecución del pseudocódigo en el Web Worker:
+ * - Ciclo de vida estricto: limpia y recrea el worker en cada ejecución.
+ * - Timeout de 10 segundos contra bucles infinitos.
+ * - Recolección de basura inmediata al detener o limpiar consola.
+ */
 export function usePseudocodeRunner() {
   const [status, setStatus] = useState<RunnerStatus>('idle');
   const [outputs, setOutputs] = useState<ConsoleOutputItem[]>([]);
   const [inputPrompt, setInputPrompt] = useState<InputPromptState | null>(null);
   const [executionTimeMs, setExecutionTimeMs] = useState<number | null>(null);
-
-  const controllerRef = useRef<ExecutionController | null>(null);
 
   const appendOutput = useCallback((type: ConsoleOutputItem['type'], text: string, line?: number, column?: number) => {
     const now = new Date();
@@ -44,29 +48,28 @@ export function usePseudocodeRunner() {
     ]);
   }, []);
 
+  // Limpiar consola y destruir worker activo para liberar recursos
   const clearConsole = useCallback(() => {
+    interpreterWorkerService.terminate();
     setOutputs([]);
     setInputPrompt(null);
     setExecutionTimeMs(null);
-    if (status !== 'running' && status !== 'waiting_input') {
-      setStatus('idle');
-    }
-  }, [status]);
+    setStatus('idle');
+  }, []);
 
+  // Detener ejecución y destruir worker
   const stop = useCallback(() => {
-    if (controllerRef.current) {
-      controllerRef.current.terminate();
-    }
+    interpreterWorkerService.terminate();
     setStatus('idle');
     setInputPrompt(null);
     appendOutput('system', 'Ejecución cancelada por el usuario.');
   }, [appendOutput]);
 
+  // Iniciar ejecución con worker nuevo y limpio
   const run = useCallback(
     (code: string) => {
-      if (controllerRef.current) {
-        controllerRef.current.terminate();
-      }
+      // 1. Terminar worker previo si existe
+      interpreterWorkerService.terminate();
 
       setExecutionTimeMs(null);
       setInputPrompt(null);
@@ -74,12 +77,10 @@ export function usePseudocodeRunner() {
 
       appendOutput('system', 'Iniciando compilación y ejecución...');
 
-      const controller = new ExecutionController({
-        workerFactory: () => {
-          return new Worker(new URL('../engine/worker/interpreter.worker.ts', import.meta.url), {
-            type: 'module',
-          });
-        },
+      // 2. Ejecutar con timeout de 10 segundos
+      interpreterWorkerService.execute({
+        code,
+        timeoutMs: 10000,
         callbacks: {
           onPrint: (text: string) => {
             appendOutput('stdout', text);
@@ -108,28 +109,31 @@ export function usePseudocodeRunner() {
             appendOutput('error', `${prefix}${location}: ${err.message}`, err.line, err.column);
           },
         },
-        timeoutMs: 3000,
       });
-
-      controllerRef.current = controller;
-      controller.run(code);
     },
     [appendOutput]
   );
 
   const provideInput = useCallback(
     (value: string) => {
-      if (!controllerRef.current || status !== 'waiting_input' || !inputPrompt) {
+      if (status !== 'waiting_input' || !inputPrompt) {
         return;
       }
 
       appendOutput('stdin', `> ${value}`);
       setInputPrompt(null);
       setStatus('running');
-      controllerRef.current.provideInput(value);
+      interpreterWorkerService.provideInput(value);
     },
     [appendOutput, inputPrompt, status]
   );
+
+  // Limpieza al desmontar el componente
+  useEffect(() => {
+    return () => {
+      interpreterWorkerService.terminate();
+    };
+  }, []);
 
   return {
     status,

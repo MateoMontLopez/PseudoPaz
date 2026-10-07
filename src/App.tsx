@@ -9,20 +9,28 @@ import { ExportPdfModal } from './components/pdf/ExportPdfModal';
 import { usePseudocodeRunner } from './hooks/usePseudocodeRunner';
 import { useSessionGuard } from './hooks/useSessionGuard';
 import { usePdfExporter } from './hooks/usePdfExporter';
+import { useWorkspaceStore } from './hooks/useWorkspaceStore';
 import { AlertTriangle, X } from 'lucide-react';
-
-const INITIAL_CODE = `Algoritmo SinTitulo
-  
-FinAlgoritmo
-`;
 
 export const App: React.FC = () => {
   const [mode, setMode] = useState<AppMode>('code');
-  const [code, setCode] = useState<string>(INITIAL_CODE);
+
+  // Hook del espacio de trabajo con persistencia de archivos multi-tab
+  const {
+    files,
+    activeFileId,
+    activeFile,
+    updateActiveFileContent,
+    switchFile,
+    createFile,
+    closeFile,
+    resetActiveFileContent,
+    resetWorkspace,
+  } = useWorkspaceStore();
 
   const flowchartContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Hook del motor Web Worker
+  // Hook del motor Web Worker con recolección de basura y timeout de 10s
   const {
     status,
     outputs,
@@ -34,17 +42,17 @@ export const App: React.FC = () => {
     clearConsole,
   } = usePseudocodeRunner();
 
-  // Callback de borrado efímero de sesión cuando se pierde el foco en Modo Examen
+  // Callback de borrado efímero de sesión cuando se pierde el foco únicamente en Modo Examen
   const handleSessionReset = useCallback(() => {
     stop();
-    setCode('Algoritmo SinTitulo\n  \nFinAlgoritmo\n');
+    resetWorkspace();
     clearConsole();
-  }, [stop, clearConsole]);
+  }, [stop, resetWorkspace, clearConsole]);
 
-  // Hook de seguridad de sesión
+  // Hook de seguridad de sesión (Modo Examen estricto vs Modo Práctica flexible)
   const { isGuardEnabled, toggleGuard, toastMessage, clearToast } = useSessionGuard({
     onSessionReset: handleSessionReset,
-    initialEnabled: false, // Inicia en Modo Práctica por defecto para no frustrar el testing, con toggle en Header
+    initialEnabled: false, // Inicia en Modo Práctica por defecto para preservar pestañas y libertad
   });
 
   // Hook del exportador de PDF
@@ -54,18 +62,18 @@ export const App: React.FC = () => {
     closeExportModal,
     executeExport,
   } = usePdfExporter({
-    code,
+    code: activeFile.content,
     outputs,
     getFlowchartElement: () => flowchartContainerRef.current,
   });
 
   const handleRun = () => {
-    if (!code.trim()) return;
-    run(code);
+    if (!activeFile.content.trim()) return;
+    run(activeFile.content);
   };
 
   const handleClearEditor = () => {
-    setCode('Algoritmo SinTitulo\n  \nFinAlgoritmo\n');
+    resetActiveFileContent();
     clearConsole();
   };
 
@@ -84,7 +92,7 @@ export const App: React.FC = () => {
         onOpenExportModal={openExportModal}
       />
 
-      {/* Toast minimalista de pérdida de foco */}
+      {/* Toast minimalista de pérdida de foco en Modo Examen */}
       {toastMessage && (
         <div className="fixed top-14 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 bg-rose-950/90 border border-rose-600/40 text-rose-200 rounded-md shadow-2xl text-xs backdrop-blur-md animate-in slide-in-from-top-2 duration-200">
           <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
@@ -108,8 +116,13 @@ export const App: React.FC = () => {
             onRunShortcut={handleRun}
             editor={
               <CodeEditor
-                value={code}
-                onChange={setCode}
+                value={activeFile.content}
+                onChange={updateActiveFileContent}
+                files={files}
+                activeFileId={activeFileId}
+                onSwitchFile={switchFile}
+                onCreateFile={() => void createFile()}
+                onCloseFile={closeFile}
                 isClipboardGuardEnabled={true}
               />
             }
@@ -140,7 +153,7 @@ export const App: React.FC = () => {
         isOpen={isModalOpen}
         onClose={closeExportModal}
         onConfirmExport={executeExport}
-        code={code}
+        code={activeFile.content}
       />
     </div>
   );
