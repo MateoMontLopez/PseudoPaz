@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#08090c" />
+    <title>PsudoPaz | IDE de pseudocódigo</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="ide" id="ide">
+      <header class="topbar">
+        <button class="icon-button sidebar-toggle" id="sidebar-toggle" title="Alternar explorador" aria-label="Alternar explorador">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M5.5 8h1M5.5 11h1"/></svg>
+        </button>
+        <a class="brand" href="#" aria-label="PsudoPaz inicio">
+          <span class="brand-mark">P.</span>
+          <span class="brand-name">PsudoPaz</span>
+        </a>
+        <div class="tab-strip" id="tab-strip" role="tablist" aria-label="Archivos abiertos"></div>
+        <div class="toolbar">
+          <button class="icon-button" id="save-file" title="Guardar" aria-label="Guardar">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l4 4v14H3V5a2 2 0 0 1 2-2Z"/><path d="M7 3v6h10V3M7 21v-8h10v8"/></svg>
+          </button>
+          <button class="icon-button" id="export-pdf" title="Descargar archivo PDF" aria-label="Descargar PDF">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10z"/><path d="M13 3v7h7M12 12v7m-3-3 3 3 3-3"/></svg>
+          </button>
+          <button class="icon-button settings-trigger" id="settings-trigger" title="Ajustes" aria-label="Ajustes">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="11" cy="18" r="2"/></svg>
+          </button>
+          <button class="icon-button" id="guide-toggle" title="Mostrar u ocultar guía" aria-label="Mostrar u ocultar guía">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M12 4v16M4 12h16"/></svg>
+          </button>
+          <span class="toolbar-divider"></span>
+          <button class="run-button" id="run-button"><span class="play-icon" aria-hidden="true">▶</span><span>Ejecutar</span><kbd>F5</kbd></button>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <nav class="activity-bar" aria-label="Vistas">
+          <button class="activity-button is-active" data-view="files" title="Archivos" aria-label="Archivos">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5"/><circle cx="18.5" cy="18.5" r="4.3" fill="#090b10"/><path d="M18.5 16.5v4m-2-2h4"/></svg>
+          </button>
+          <button class="activity-button" data-view="search" title="Segmentación de colores" aria-label="Segmentación de colores">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+          </button>
+          <button class="activity-button" data-view="dfd" title="Diagrama de flujo" aria-label="Diagrama de flujo">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="5" rx="2"/><path d="M12 8v5m-4 0h8l-4 6z"/></svg>
+          </button>
+        </nav>
+
+        <aside class="explorer pane" id="explorer">
+          <div class="pane-heading"><span id="explorer-title">EXPLORADOR</span><button class="tiny-button" id="explorer-add" title="Nuevo archivo" aria-label="Nuevo archivo">+</button></div>
+          <div class="file-list" id="file-list"></div>
+          <div class="explorer-foot"><span class="live-dot"></span> Espacio de trabajo local</div>
+        </aside>
+        <aside class="dfd-toolbox pane" id="dfd-toolbox" hidden>
+          <div class="toolbox-heading"><strong>FORMAS DFD</strong><span>Arrastra bloques al lienzo</span></div>
+          <div class="dfd-tools">
+            <button class="dfd-tool" data-dfd-tool="Terminal"><span class="shape-symbol shape-terminal">Inicio<br />Fin</span><span><strong>Terminal</strong><small>Inicio / Fin</small></span></button>
+            <button class="dfd-tool" data-dfd-tool="Proceso"><span class="shape-symbol shape-process">x ← 1</span><span><strong>Proceso</strong><small>Asignación / Operación</small></span></button>
+            <button class="dfd-tool" data-dfd-tool="Lectura / E/S"><span class="shape-symbol shape-io">E/S</span><span><strong>Lectura / E/S</strong><small>Leer variable</small></span></button>
+            <button class="dfd-tool" data-dfd-tool="Salida / Pantalla"><span class="shape-symbol shape-output">ESC</span><span><strong>Salida / Pantalla</strong><small>Escribir datos</small></span></button>
+            <button class="dfd-tool" data-dfd-tool="Decisión (SI)"><span class="shape-symbol shape-decision">?</span><span><strong>Decisión (SI)</strong><small>Bifurcación Sí / No</small></span></button>
+            <button class="dfd-tool" data-dfd-tool="Iteración / Loop"><span class="shape-symbol shape-loop">PARA</span><span><strong>Iteración / Loop</strong><small>PARA / MIENTRAS</small></span></button>
+          </div>
+          <section class="variable-inspector"><h3>INSPECTOR VARIABLES</h3><p><span>n :</span><strong>6</strong></p><p><span>fact :</span><strong>720</strong></p><p><span>i :</span><strong>6</strong></p><button id="dfd-simulate">Simulación completa<small>Ejecutar paso 15/15</small></button></section>
+        </aside>
+
+        <main class="main-area">
+          <div class="search-row" id="search-row" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>
+            <input id="search-input" type="search" placeholder="Buscar en el archivo activo..." aria-label="Buscar en el archivo activo" />
+            <span id="search-count" class="search-count"></span>
+            <button class="tiny-button" id="close-search" title="Cerrar búsqueda" aria-label="Cerrar búsqueda">×</button>
+          </div>
+          <section class="editor-panel" id="editor-panel" aria-label="Editor de pseudocódigo">
+            <div class="editor-heading">
+              <div><span class="crumb">workspace</span><span class="crumb-sep">/</span><strong id="active-filename">factorial.psc</strong><span class="unsaved-dot" id="unsaved-dot" hidden></span></div>
+              <div class="editor-tools"><span id="cursor-position">Ln 1, Col 1</span><span class="editor-language">Pseudocódigo</span></div>
+            </div>
+            <section class="print-header" aria-label="Metadatos de exportación">
+              <div class="print-brandline">
+                <div class="print-brand"><span class="print-brand-mark">P.</span><span><strong>PsudoPaz</strong><small> · Código Fuente Oficial</small></span></div>
+                <span class="print-format"><i></i>Pseudocódigo (.psc)</span>
+              </div>
+              <div class="print-metadata">
+                <div><span>ARCHIVO</span><strong id="print-file"></strong><small>Algoritmo principal</small></div>
+                <div><span>AUTOR</span><strong id="print-author"></strong><small>Desarrollador</small></div>
+                <div><span>FECHA</span><strong id="print-date"></strong><small>Documento exportado</small></div>
+                <div><span>LÍNEAS</span><strong id="print-lines"></strong><small><i class="print-ok-dot"></i><span id="print-validation">Vista previa</span></small></div>
+              </div>
+            </section>
+            <div class="code-editor" id="code-editor-shell">
+              <div class="line-numbers" id="line-numbers" aria-hidden="true"></div>
+              <div class="code-surface">
+                <pre class="syntax-layer" id="syntax-layer" aria-hidden="true"></pre>
+                <textarea id="code-input" aria-label="Código de pseudocódigo" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" wrap="off"></textarea>
+              </div>
+            </div>
+            <footer class="print-footer"><span>Documento exportado desde PsudoPaz Web IDE</span><span>Página 1 de 1</span></footer>
+          </section>
+
+          <section class="dfd-panel" id="dfd-panel" aria-label="Diagrama de flujo" hidden>
+            <div class="dfd-heading">
+              <div><span class="crumb">workspace</span><span class="crumb-sep">/</span><strong>factorial.dfd</strong></div>
+              <div class="dfd-actions"><span class="dfd-badge"><span class="live-dot"></span> DFD válido</span><button id="dfd-step" class="dfd-action">Paso a paso</button></div>
+            </div>
+            <div class="flow-canvas" id="flow-canvas">
+              <div class="flow-board">
+                <svg class="flow-connectors" viewBox="0 0 860 500" preserveAspectRatio="none" aria-hidden="true">
+                  <defs><marker id="flow-arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 8 4 0 8z" fill="#526176"/></marker><marker id="flow-arrow-yes" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 8 4 0 8z" fill="#fb4567"/></marker></defs>
+                  <path d="M430 44v16m0 48v18m0 56v42m0 48v15m0 48v20m0 48v18m0 48v14" marker-end="url(#flow-arrow)"/>
+                  <path class="flow-branch-yes" d="M367 154H270v62" marker-end="url(#flow-arrow-yes)"/>
+                  <path class="flow-branch-return" d="M195 240v204h182" marker-end="url(#flow-arrow-yes)"/>
+                  <path class="flow-loopback" d="M515 309h76v-70h-47" marker-end="url(#flow-arrow)"/>
+                </svg>
+                <span class="flow-label flow-label-yes">Sí</span><span class="flow-label flow-label-no">No</span><span class="flow-label flow-label-loop">Siguiente i</span>
+                <div class="flow-node flow-start"><span class="node-label">Inicio: Factorial</span></div>
+                <div class="flow-node flow-assignment flow-io">n ← 6, fact ← 1</div>
+                <div class="flow-node flow-decision">n &lt; 0 ?</div>
+                <div class="flow-node flow-error">"Error: n &lt; 0"</div>
+                <div class="flow-node flow-loop">i ← 1 hasta n (paso 1)</div>
+                <div class="flow-node flow-process"><span>fact ← fact * i</span></div>
+                <div class="flow-node flow-output">Mostrar "Total:", fact</div>
+                <div class="flow-node flow-end"><span class="node-label">Fin</span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="console-panel" id="console-panel" aria-label="Consola">
+            <div class="console-heading">
+              <div class="console-title"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 7 5 5-5 5m7 0h7"/></svg><span id="console-title-label">CONSOLA</span></div>
+              <div class="console-tabs" role="tablist" aria-label="Filtrar mensajes">
+                <button class="console-tab is-active" data-filter="all">Todos</button>
+                <button class="console-tab" data-filter="errors">Errores <span id="error-count">0</span></button>
+                <button class="console-tab" data-filter="warnings">Avisos <span id="warning-count">0</span></button>
+              </div>
+              <button class="icon-button console-clear" id="clear-console" title="Limpiar consola" aria-label="Limpiar consola"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M5 7l1 14h12l1-14M9 7V4h6v3"/></svg></button>
+            </div>
+            <div class="console-output" id="console-output" aria-live="polite"></div>
+            <form class="command-line" id="command-form">
+              <span class="command-prompt">›</span>
+              <input id="command-input" type="text" placeholder="Escribe un comando: help" autocomplete="off" aria-label="Comando de consola" />
+              <kbd>Enter</kbd>
+            </form>
+          </section>
+        </main>
+
+        <aside class="guide pane" id="guide">
+          <div class="pane-heading"><span>GUÍA DE SINTAXIS</span><button class="tiny-button guide-close" id="guide-close" title="Ocultar guía" aria-label="Ocultar guía">×</button></div>
+          <div class="guide-scroll">
+            <div class="guide-intro"><span class="guide-kicker">REFERENCIA RÁPIDA</span><h2>Construye tu algoritmo</h2><p>Selecciona una estructura para insertarla en el editor.</p></div>
+            <section class="guide-group"><h3><span class="legend-dot keyword-dot"></span>Estructura principal</h3>
+              <button class="syntax-card" data-insert="ALGORITMO Nombre\nVAR\n    // variables\nINICIO\n    // instrucciones\nFIN"><code>ALGORITMO</code><span>Define el bloque principal</span></button>
+            </section>
+            <section class="guide-group"><h3><span class="legend-dot keyword-dot"></span>Control de flujo</h3>
+              <button class="syntax-card" data-insert="SI condicion ENTONCES\n    instrucciones\nSINO\n    instrucciones\nFINSI"><code>SI / ENTONCES</code><span>Decisión condicional</span></button>
+              <button class="syntax-card" data-insert="PARA i &lt;- 1 HASTA limite HACER\n    instrucciones\nFINPARA"><code>PARA / HASTA</code><span>Repetición definida</span></button>
+              <button class="syntax-card" data-insert="MIENTRAS condicion HACER\n    instrucciones\nFINMIENTRAS"><code>MIENTRAS</code><span>Repetición condicional</span></button>
+              <button class="syntax-card" data-insert="REPETIR\n    instrucciones\nHASTA QUE condicion"><code>REPETIR / HASTA QUE</code><span>Evalúa al final del ciclo</span></button>
+            </section>
+            <section class="guide-group"><h3><span class="legend-dot io-dot"></span>Entrada y salida</h3>
+              <button class="syntax-card compact" data-insert="LEER variable"><code>LEER variable</code><span>Recibir un dato</span></button>
+              <button class="syntax-card compact" data-insert="ESCRIBIR \"Mensaje\", variable"><code>ESCRIBIR</code><span>Mostrar información</span></button>
+            </section>
+          </div>
+        </aside>
+        <aside class="color-reference-pane pane" id="color-reference" hidden>
+          <div class="color-pane-heading"><h2>Segmentación de Colores</h2><p>Clasificación sintáctica por color</p></div>
+          <div class="color-card-list">
+            <article class="color-card color-card--keyword"><h3><i></i>Palabras Clave (Keywords)</h3><p>ALGORITMO, VAR, INICIO, SI, PARA, FIN</p></article>
+            <article class="color-card color-card--type"><h3><i></i>Tipos de Datos (Types)</h3><p>ENTERO, REAL, CADENA, BOOLEANO</p></article>
+            <article class="color-card color-card--variable"><h3><i></i>Variables e Identificadores</h3><p>n, fact, i, esValido, mensaje</p></article>
+            <article class="color-card color-card--operator"><h3><i></i>Operadores y Asignación</h3><p>&lt;-, +, -, *, /, =, &lt;, &gt;, &lt;=, &gt;=</p></article>
+            <article class="color-card color-card--number"><h3><i></i>Literales Numéricos</h3><p>0, 1, 5, 120, 3.1416</p></article>
+            <article class="color-card color-card--string"><h3><i></i>Cadenas de Texto (Strings)</h3><p>"Ingrese número", "Resultado"</p></article>
+            <article class="color-card color-card--comment"><h3><i></i>Comentarios</h3><p>// Explicación y documentación de código</p></article>
+          </div>
+        </aside>
+      </div>
+
+      <footer class="statusbar"><div class="status-left"><span class="status-indicator" id="status-indicator"></span><span id="status-text">Listo</span><span class="status-divider"></span><span class="status-count" id="status-errors">0 errores</span><span class="status-count" id="status-warnings">0 avisos</span></div><div class="status-right"><span id="status-filetype">Pseudocódigo</span><span>UTF-8</span><span>LF</span><span id="status-lines">1 línea</span></div></footer>
+    </div>
+
+    <div class="modal-backdrop" id="settings-modal" hidden>
+      <section class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="modal-heading"><div><span class="guide-kicker">PREFERENCIAS</span><h2 id="settings-title">Ajustes del editor</h2></div><button class="icon-button" id="settings-close" title="Cerrar" aria-label="Cerrar ajustes">×</button></div>
+        <label class="setting-row"><span><strong>Autor de exportación</strong><small>Se incluye en el encabezado PDF</small></span><input id="author-name" type="text" maxlength="80" placeholder="Nombre del autor" /></label>
+        <label class="setting-row"><span><strong>Tamaño de fuente</strong><small>Ajusta el texto del editor</small></span><select id="font-size"><option value="13">Pequeña</option><option value="14" selected>Normal</option><option value="16">Grande</option><option value="18">Extra grande</option></select></label>
+        <label class="setting-row"><span><strong>Modo claro</strong><small>Cambia el contraste de la interfaz</small></span><input id="light-mode" type="checkbox" /></label>
+        <label class="setting-row"><span><strong>Guardar automáticamente</strong><small>Conserva archivos en este navegador</small></span><input id="autosave" type="checkbox" checked /></label>
+        <div class="modal-footer"><span>Las preferencias se guardan en este dispositivo.</span><button class="primary-button" id="settings-done">Listo</button></div>
+      </section>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

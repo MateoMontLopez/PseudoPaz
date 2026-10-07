@@ -143,17 +143,17 @@ export const pseudocodeLanguage = StreamLanguage.define<ParserState>({
 });
 
 export const pseudocodeHighlightStyle = HighlightStyle.define([
-  { tag: t.keyword, color: '#38bdf8', fontWeight: '600' },          // Sky blue (Algoritmo, Si, Para...)
-  { tag: t.typeName, color: '#34d399', fontWeight: '500' },         // Emerald (entero, cadena...)
-  { tag: t.logicOperator, color: '#c084fc', fontWeight: '600' },     // Purple (Y, O, NO, MOD)
-  { tag: t.bool, color: '#f472b6', fontWeight: '500' },              // Pink (Verdadero, Falso)
-  { tag: t.string, color: '#fbbf24' },                               // Amber ("hola")
-  { tag: t.number, color: '#67e8f9' },                               // Cyan (123, 45.6)
-  { tag: t.operator, color: '#f87171', fontWeight: '600' },          // Rose (<-, +, =)
-  { tag: t.lineComment, color: '#71717a', fontStyle: 'italic' },     // Zinc 500
-  { tag: t.blockComment, color: '#71717a', fontStyle: 'italic' },    // Zinc 500
-  { tag: t.variableName, color: '#f4f4f5' },                         // Zinc 100
-  { tag: t.punctuation, color: '#a1a1aa' },                          // Zinc 400
+  { tag: t.keyword, color: 'var(--syntax-keyword, #38bdf8)', fontWeight: '600' },
+  { tag: t.typeName, color: 'var(--syntax-type, #34d399)', fontWeight: '500' },
+  { tag: t.logicOperator, color: 'var(--syntax-logic, #c084fc)', fontWeight: '600' },
+  { tag: t.bool, color: 'var(--syntax-bool, #f472b6)', fontWeight: '500' },
+  { tag: t.string, color: 'var(--syntax-string, #fbbf24)' },
+  { tag: t.number, color: 'var(--syntax-number, #67e8f9)' },
+  { tag: t.operator, color: 'var(--syntax-operator, #f87171)', fontWeight: '600' },
+  { tag: t.lineComment, color: 'var(--syntax-comment, #71717a)', fontStyle: 'italic' },
+  { tag: t.blockComment, color: 'var(--syntax-comment, #71717a)', fontStyle: 'italic' },
+  { tag: t.variableName, color: 'var(--syntax-variable, #f4f4f5)' },
+  { tag: t.punctuation, color: 'var(--syntax-punctuation, #a1a1aa)' },
 ]);
 
 export const pseudocodeTheme = syntaxHighlighting(pseudocodeHighlightStyle);

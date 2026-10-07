@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position, NodeProps, Node, useReactFlow } from '@xyflow/react';
+import { NodeProps, Node, useReactFlow } from '@xyflow/react';
 import { FlowchartNodeData } from './nodeTypes';
+import { NodeHandles } from './NodeHandles';
 
 export type OutputNodeType = Node<FlowchartNodeData, 'output'>;
 
 /**
- * Símbolo ANSI para Salida de Datos / Impresión en pantalla (Documento / Salida estándar).
+ * Símbolo ANSI para Salida de Datos / Impresión en pantalla (Documento).
  * Utilizado para operaciones de "Mostrar" o "Escribir".
  */
 export const OutputNode: React.FC<NodeProps<OutputNodeType>> = ({ id, data, selected }) => {
@@ -45,45 +46,40 @@ export const OutputNode: React.FC<NodeProps<OutputNodeType>> = ({ id, data, sele
   return (
     <div
       onDoubleClick={() => setIsEditing(true)}
-      className="relative group min-w-[130px] max-w-[240px] px-6 pt-3 pb-5 text-center cursor-pointer select-none"
+      style={{ background: 'transparent' }}
+      className="relative group min-w-[140px] max-w-[240px] h-[58px] px-6 pt-2.5 pb-4 text-center cursor-pointer select-none flex items-center justify-center"
     >
+      {/* 4 Handles Source y 4 Handles Target (Top, Bottom, Left, Right) */}
+      <NodeHandles
+        color="#22d3ee"
+        topOffset={{ target: '40%', source: '60%' }}
+        bottomOffset={{ target: '40%', source: '60%' }}
+        leftOffset={{ target: '35%', source: '65%' }}
+        rightOffset={{ target: '35%', source: '65%' }}
+      />
+
       {/* Fondo SVG con forma ANSI de Documento / Salida de Datos */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none overflow-visible"
         preserveAspectRatio="none"
-        viewBox="0 0 160 60"
+        viewBox="0 0 160 58"
       >
         <path
-          d="M 2 2 L 158 2 L 158 48 C 135 38, 105 38, 80 48 C 55 58, 25 58, 2 48 Z"
-          fill={selected ? 'rgba(8, 47, 73, 0.75)' : 'rgba(8, 47, 73, 0.5)'}
+          d="M 2 2 L 158 2 L 158 46 C 135 36, 105 36, 80 46 C 55 56, 25 56, 2 46 Z"
+          fill={selected ? 'rgba(34, 211, 238, 0.25)' : 'var(--node-bg)'}
           stroke={selected ? '#22d3ee' : '#0891b2'}
           strokeWidth={selected ? 2 : 1.5}
           style={{
             filter: selected
               ? 'drop-shadow(0 0 8px rgba(34, 211, 238, 0.5))'
-              : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35))',
+              : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))',
             transition: 'all 0.15s ease-in-out',
           }}
         />
       </svg>
 
-      {/* Handle superior de entrada (Target) */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="!w-2.5 !h-2.5 !bg-zinc-800 !border-2 !border-cyan-400 hover:!scale-125 !transition-transform !-top-[5px]"
-      />
-
-      {/* Handle izquierdo */}
-      <Handle
-        type="target"
-        id="left"
-        position={Position.Left}
-        className="!w-2 !h-2 !bg-zinc-800 !border-2 !border-cyan-400/80 hover:!scale-125 !transition-transform !top-[40%]"
-      />
-
       {/* Contenido / Texto editable */}
-      <div className="relative z-10 px-1 py-0.5">
+      <div className="relative z-10 px-1 py-0.5 max-w-[130px]">
         {isEditing ? (
           <input
             ref={inputRef}
@@ -98,29 +94,14 @@ export const OutputNode: React.FC<NodeProps<OutputNodeType>> = ({ id, data, sele
                 setIsEditing(false);
               }
             }}
-            className="bg-transparent text-cyan-200 text-xs font-mono font-medium text-center outline-none w-full border-b border-cyan-400/60"
+            className="bg-transparent text-cyan-700 dark:text-cyan-200 text-xs font-mono font-medium text-center outline-none w-full border-b border-cyan-400/60"
           />
         ) : (
-          <span className="text-xs font-mono font-medium text-cyan-200 block break-words">
+          <span className="text-xs font-mono font-medium text-cyan-700 dark:text-cyan-200 block break-words leading-tight">
             {text}
           </span>
         )}
       </div>
-
-      {/* Handle derecho */}
-      <Handle
-        type="source"
-        id="right"
-        position={Position.Right}
-        className="!w-2 !h-2 !bg-zinc-800 !border-2 !border-cyan-400/80 hover:!scale-125 !transition-transform !top-[40%]"
-      />
-
-      {/* Handle inferior de salida (Source) - alineado con la onda del documento */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!w-2.5 !h-2.5 !bg-zinc-800 !border-2 !border-cyan-400 hover:!scale-125 !transition-transform !bottom-[3px]"
-      />
     </div>
   );
 };

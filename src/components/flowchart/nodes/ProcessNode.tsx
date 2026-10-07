@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position, NodeProps, Node, useReactFlow } from '@xyflow/react';
+import { NodeProps, Node, useReactFlow } from '@xyflow/react';
 import { FlowchartNodeData } from './nodeTypes';
+import { NodeHandles } from './NodeHandles';
 
 export type ProcessNodeType = Node<FlowchartNodeData, 'process'>;
 
@@ -41,25 +42,20 @@ export const ProcessNode: React.FC<NodeProps<ProcessNodeType>> = ({ id, data, se
   return (
     <div
       onDoubleClick={() => setIsEditing(true)}
-      className={`relative group px-5 py-3 rounded-md border transition-all duration-150 select-none shadow-md min-w-[130px] max-w-[240px] text-center ${
+      style={{ background: 'transparent' }}
+      className={`relative group px-5 py-3 rounded-md border transition-all duration-150 select-none shadow-md min-w-[130px] max-w-[240px] text-center cursor-pointer ${
         selected
-          ? 'border-sky-400 bg-sky-950/40 ring-2 ring-sky-500/30'
-          : 'border-sky-700/60 bg-zinc-900/90 hover:border-sky-500'
+          ? 'border-sky-500 bg-sky-500/20 ring-2 ring-sky-500/40'
+          : 'border-sky-600/70 dark:border-sky-700/60 bg-[var(--node-bg)] hover:border-sky-500'
       }`}
     >
-      {/* Handle superior de entrada (Target) */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="!w-2.5 !h-2.5 !bg-zinc-800 !border-2 !border-sky-400 hover:!scale-125 !transition-transform"
-      />
-
-      {/* Handle izquierdo */}
-      <Handle
-        type="target"
-        id="left"
-        position={Position.Left}
-        className="!w-2 !h-2 !bg-zinc-800 !border-2 !border-sky-400/80 hover:!scale-125 !transition-transform"
+      {/* 4 Handles Source y 4 Handles Target (Top, Bottom, Left, Right) */}
+      <NodeHandles
+        color="#0284c7"
+        topOffset={{ target: '40%', source: '60%' }}
+        bottomOffset={{ target: '40%', source: '60%' }}
+        leftOffset={{ target: '35%', source: '65%' }}
+        rightOffset={{ target: '35%', source: '65%' }}
       />
 
       {isEditing ? (
@@ -76,28 +72,13 @@ export const ProcessNode: React.FC<NodeProps<ProcessNodeType>> = ({ id, data, se
               setIsEditing(false);
             }
           }}
-          className="bg-transparent text-zinc-100 text-xs font-mono font-medium text-center outline-none w-full border-b border-sky-400/50"
+          className="bg-transparent text-[var(--text-primary)] text-xs font-mono font-medium text-center outline-none w-full border-b border-sky-400/50"
         />
       ) : (
-        <span className="text-xs font-mono font-medium text-zinc-200 block break-words">
+        <span className="text-xs font-mono font-medium text-[var(--text-primary)] block break-words">
           {text}
         </span>
       )}
-
-      {/* Handle derecho */}
-      <Handle
-        type="source"
-        id="right"
-        position={Position.Right}
-        className="!w-2 !h-2 !bg-zinc-800 !border-2 !border-sky-400/80 hover:!scale-125 !transition-transform"
-      />
-
-      {/* Handle inferior de salida (Source) */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!w-2.5 !h-2.5 !bg-zinc-800 !border-2 !border-sky-400 hover:!scale-125 !transition-transform"
-      />
     </div>
   );
 };

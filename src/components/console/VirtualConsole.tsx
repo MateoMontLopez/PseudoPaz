@@ -30,16 +30,16 @@ export const VirtualConsole: React.FC<VirtualConsoleProps> = ({
   }, [outputs, inputPrompt]);
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#0d0d10] font-mono text-xs overflow-hidden select-text">
+    <div className="flex flex-col h-full w-full bg-[var(--console-bg)] font-mono text-xs overflow-hidden select-text transition-colors duration-150">
       {/* Header de la consola */}
-      <div className="flex items-center justify-between px-3.5 py-2 bg-zinc-900/60 border-b border-zinc-800/80 select-none">
+      <div className="flex items-center justify-between px-3.5 py-2 bg-[var(--console-header-bg)] border-b border-[var(--border-color)] select-none">
         <div className="flex items-center space-x-2">
-          <Terminal className="w-4 h-4 text-emerald-400" />
-          <span className="font-medium text-zinc-300">Terminal I/O</span>
+          <Terminal className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
+          <span className="font-medium text-[var(--text-primary)]">Terminal I/O</span>
 
           {executionTimeMs !== null && (
-            <span className="flex items-center gap-1 text-[11px] text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded border border-zinc-700/50">
-              <Clock className="w-3 h-3 text-zinc-400" />
+            <span className="flex items-center gap-1 text-[11px] text-[var(--text-secondary)] bg-[var(--bg-surface-subtle)] px-2 py-0.5 rounded border border-[var(--border-color)]">
+              <Clock className="w-3 h-3 text-[var(--text-muted)]" />
               {executionTimeMs} ms
             </span>
           )}
@@ -50,7 +50,7 @@ export const VirtualConsole: React.FC<VirtualConsoleProps> = ({
             <button
               onClick={onClearConsole}
               title="Limpiar consola"
-              className="flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-200 px-2 py-1 rounded hover:bg-zinc-800/60 transition-colors"
+              className="flex items-center gap-1 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)] px-2 py-1 rounded hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Limpiar</span>
@@ -62,10 +62,10 @@ export const VirtualConsole: React.FC<VirtualConsoleProps> = ({
       {/* Área de mensajes de la consola */}
       <div ref={scrollRef} className="flex-1 p-3.5 overflow-y-auto space-y-1.5 font-mono">
         {outputs.length === 0 && status === 'idle' && (
-          <div className="flex flex-col items-center justify-center h-full text-zinc-600 space-y-1.5 select-none py-12">
-            <Terminal className="w-8 h-8 text-zinc-700 stroke-[1.5]" />
+          <div className="flex flex-col items-center justify-center h-full text-[var(--text-muted)] space-y-1.5 select-none py-12">
+            <Terminal className="w-8 h-8 opacity-40 stroke-[1.5]" />
             <p className="text-xs">Consola lista para ejecutar.</p>
-            <p className="text-[11px] text-zinc-700">Presiona 'Ejecutar' (Ctrl+Enter) para iniciar la compilación.</p>
+            <p className="text-[11px] opacity-75">Presiona 'Ejecutar' (Ctrl+Enter) para iniciar la compilación.</p>
           </div>
         )}
 
@@ -73,21 +73,21 @@ export const VirtualConsole: React.FC<VirtualConsoleProps> = ({
           switch (item.type) {
             case 'stdout':
               return (
-                <div key={item.id} className="text-zinc-200 leading-relaxed break-words whitespace-pre-wrap">
+                <div key={item.id} className="text-[var(--text-primary)] leading-relaxed break-words whitespace-pre-wrap">
                   {item.text}
                 </div>
               );
 
             case 'stdin':
               return (
-                <div key={item.id} className="text-sky-300 font-semibold break-words">
+                <div key={item.id} className="text-sky-600 dark:text-sky-300 font-semibold break-words">
                   {item.text}
                 </div>
               );
 
             case 'system':
               return (
-                <div key={item.id} className="text-zinc-500 text-[11px] italic py-0.5">
+                <div key={item.id} className="text-[var(--text-muted)] text-[11px] italic py-0.5">
                   [{item.timestamp}] {item.text}
                 </div>
               );
@@ -96,11 +96,11 @@ export const VirtualConsole: React.FC<VirtualConsoleProps> = ({
               return (
                 <div
                   key={item.id}
-                  className="flex items-start gap-2 p-2.5 my-1 bg-rose-950/20 border border-rose-900/40 rounded text-rose-300 text-xs leading-normal"
+                  className="flex items-start gap-2 p-2.5 my-1 bg-rose-500/10 border border-rose-500/30 rounded text-rose-600 dark:text-rose-300 text-xs leading-normal"
                 >
-                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <AlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
                   <div className="flex-1 whitespace-pre-wrap break-words">
-                    <span className="font-semibold text-rose-200">{item.text}</span>
+                    <span className="font-semibold">{item.text}</span>
                   </div>
                 </div>
               );
@@ -110,21 +110,13 @@ export const VirtualConsole: React.FC<VirtualConsoleProps> = ({
           }
         })}
 
-        {/* Prompt interactivo de lectura ('Leer') */}
-        {status === 'waiting_input' && inputPrompt && (
+        {/* Input interactivo si se espera 'Leer' */}
+        {inputPrompt && (
           <ConsoleInput
             variableName={inputPrompt.variableName}
             expectedType={inputPrompt.expectedType}
             onSubmit={onProvideInput}
           />
-        )}
-
-        {/* Indicador de ejecución activa sin input */}
-        {status === 'running' && (
-          <div className="flex items-center gap-2 text-zinc-500 text-xs pt-1 select-none">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Ejecutando algoritmo...</span>
-          </div>
         )}
       </div>
     </div>

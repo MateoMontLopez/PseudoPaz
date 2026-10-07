@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position, NodeProps, Node, useReactFlow } from '@xyflow/react';
+import { NodeProps, Node, useReactFlow } from '@xyflow/react';
 import { FlowchartNodeData } from './nodeTypes';
+import { NodeHandles } from './NodeHandles';
 
 export type TerminalNodeType = Node<FlowchartNodeData, 'terminal'>;
 
@@ -38,21 +39,23 @@ export const TerminalNode: React.FC<NodeProps<TerminalNodeType>> = ({ id, data, 
     );
   };
 
-
   return (
     <div
       onDoubleClick={() => setIsEditing(true)}
-      className={`relative group px-6 py-2.5 rounded-full border transition-all duration-150 select-none shadow-md min-w-[120px] text-center ${
+      style={{ background: 'transparent' }}
+      className={`relative group px-6 py-2.5 rounded-full border transition-all duration-150 select-none shadow-md min-w-[125px] text-center cursor-pointer ${
         selected
-          ? 'border-emerald-400 bg-emerald-950/40 ring-2 ring-emerald-500/30'
-          : 'border-emerald-600/70 bg-zinc-900/90 hover:border-emerald-500'
+          ? 'border-emerald-500 bg-emerald-500/20 ring-2 ring-emerald-500/40'
+          : 'border-emerald-600/70 dark:border-emerald-600/70 bg-[var(--node-bg)] hover:border-emerald-500'
       }`}
     >
-      {/* Handle superior de entrada (Target) */}
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="!w-2.5 !h-2.5 !bg-zinc-800 !border-2 !border-emerald-400 hover:!scale-125 !transition-transform"
+      {/* 4 Handles Source y 4 Handles Target (Top, Bottom, Left, Right) */}
+      <NodeHandles
+        color="#10b981"
+        topOffset={{ target: '40%', source: '60%' }}
+        bottomOffset={{ target: '40%', source: '60%' }}
+        leftOffset={{ target: '35%', source: '65%' }}
+        rightOffset={{ target: '35%', source: '65%' }}
       />
 
       {isEditing ? (
@@ -69,20 +72,13 @@ export const TerminalNode: React.FC<NodeProps<TerminalNodeType>> = ({ id, data, 
               setIsEditing(false);
             }
           }}
-          className="bg-transparent text-emerald-200 text-xs font-mono font-medium text-center outline-none w-full border-b border-emerald-400/50"
+          className="bg-transparent text-emerald-600 dark:text-emerald-200 text-xs font-mono font-medium text-center outline-none w-full border-b border-emerald-400/50"
         />
       ) : (
-        <span className="text-xs font-mono font-medium text-emerald-300 block tracking-wide">
+        <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-300 block tracking-wide">
           {text}
         </span>
       )}
-
-      {/* Handle inferior de salida (Source) */}
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!w-2.5 !h-2.5 !bg-zinc-800 !border-2 !border-emerald-400 hover:!scale-125 !transition-transform"
-      />
     </div>
   );
 };
