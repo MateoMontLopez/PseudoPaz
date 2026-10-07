@@ -1,6 +1,6 @@
 import * as pdfMakeModule from 'pdfmake/build/pdfmake';
 import * as pdfFontsModule from 'pdfmake/build/vfs_fonts';
-import { TDocumentDefinitions, Content } from 'pdfmake/interfaces';
+import { TDocumentDefinitions, Content, ContextPageSize } from 'pdfmake/interfaces';
 import { FingerprintResult } from './cryptoFingerprint';
 import { ConsoleOutputItem } from '../../hooks/usePseudocodeRunner';
 import {
@@ -41,33 +41,24 @@ export interface GeneratePdfOptions {
 }
 
 /**
- * Pre-carga la imagen del logo institucional desde la carpeta public/ como un HTMLImageElement
- * listo para ser dibujado en el canvas de alta resolución del encabezado PDF.
- * Retorna null si la imagen no puede cargarse (fallback elegante sin logo).
+ * Convierte la imagen estática /logo-universidad.png (almacenada en public/)
+ * a Data URL (Base64) antes de armar la definición del PDF.
  */
-async function loadLogoImage(): Promise<HTMLImageElement | null> {
+const getLogoBase64 = async (): Promise<string | null> => {
   try {
     const response = await fetch('/logo-universidad.png');
     if (!response.ok) return null;
     const blob = await response.blob();
-    const objectUrl = URL.createObjectURL(blob);
-
-    return new Promise<HTMLImageElement | null>((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        URL.revokeObjectURL(objectUrl);
-        resolve(img);
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        resolve(null);
-      };
-      img.src = objectUrl;
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
     });
   } catch {
-    return null;
+    return null; // Fallback elegante si no carga la imagen
   }
-}
+};
 
 /**
  * Genera y descarga el documento PDF con certificación de autenticidad criptográfica e inmovilización anti-copia.
@@ -89,8 +80,8 @@ export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<
 
   const content: Content[] = [];
 
-  // ================= 0. PRE-CARGA DEL LOGO INSTITUCIONAL =================
-  const logoImage = await loadLogoImage();
+  // ================= 0. CARGA DEL LOGO INSTITUCIONAL EN BASE64 =================
+  const logoDataUrl = await getLogoBase64();
 
   // ================= 1. MEMBRETE Y CREDENCIALES (INALTERABLE / NO COPIABLE) =================
   const headerCardImage = renderHeaderCard({
@@ -99,7 +90,6 @@ export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<
     course,
     workTitle,
     fingerprint,
-    logoImage,
   });
 
   content.push({
@@ -180,6 +170,20 @@ export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<
     pageSize: 'A4',
     pageOrientation: 'portrait',
     pageMargins: [40, 45, 40, 45],
+
+    // Fondo con marca de agua institucional (logo universitario central difuminado)
+    background: function (_currentPage: number, pageSize: ContextPageSize) {
+      if (!logoDataUrl) return null;
+      return {
+        image: logoDataUrl,
+        width: 300,
+        opacity: 0.08, // Transparencia tenue para no obstaculizar la lectura del código
+        absolutePosition: {
+          x: (pageSize.width - 300) / 2,
+          y: (pageSize.height - 300) / 2,
+        },
+      };
+    },
 
     // Marca de agua diagonal semitransparente inalterable (Nivel 2 de seguridad)
     watermark: {
