@@ -7,7 +7,6 @@ export interface HeaderSnapshotOptions {
   course: string;
   workTitle: string;
   fingerprint: FingerprintResult;
-  logoImage?: HTMLImageElement | null;
 }
 
 /**
@@ -15,10 +14,10 @@ export interface HeaderSnapshotOptions {
  * directamente a un canvas HTML5 de alta resolución (300 DPI) para evitar cualquier selección o copia de texto.
  */
 export function renderHeaderCard(options: HeaderSnapshotOptions): string {
-  const { studentName, subject, course, workTitle, fingerprint, logoImage } = options;
+  const { studentName, subject, course, workTitle, fingerprint } = options;
 
   const width = 1200;
-  const height = logoImage ? 460 : 380;
+  const height = 360;
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -31,36 +30,17 @@ export function renderHeaderCard(options: HeaderSnapshotOptions): string {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, width, height);
 
-  // 0. Logo Institucional (si se proporcionó la imagen precargada)
-  const textOffsetX = logoImage ? 160 : 30;
-
-  if (logoImage) {
-    // Dibujar el logo manteniendo proporción dentro de un área de 120x120
-    const maxLogoSize = 120;
-    const logoAspect = logoImage.naturalWidth / logoImage.naturalHeight;
-    let drawW = maxLogoSize;
-    let drawH = maxLogoSize;
-    if (logoAspect > 1) {
-      drawH = maxLogoSize / logoAspect;
-    } else {
-      drawW = maxLogoSize * logoAspect;
-    }
-    const logoX = 30 + (maxLogoSize - drawW) / 2;
-    const logoY = 12 + (maxLogoSize - drawH) / 2;
-    ctx.drawImage(logoImage, logoX, logoY, drawW, drawH);
-  }
-
   // 1. Membrete Institucional UNIPAZ
   ctx.fillStyle = '#0f172a';
   ctx.font = 'bold 22px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.fillText('INSTITUTO UNIVERSITARIO DE LA PAZ — UNIPAZ', textOffsetX, 40);
+  ctx.fillText('INSTITUTO UNIVERSITARIO DE LA PAZ — UNIPAZ', 30, 40);
 
   ctx.fillStyle = '#64748b';
   ctx.font = '13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-  ctx.fillText('Escuela de Ingeniería y Logística • Ingeniería de Sistemas • Entorno de Algoritmia PseudoPaz', textOffsetX, 62);
+  ctx.fillText('Escuela de Ciencias • Ingeniería Informática • Lógica y Programación', 30, 62);
 
-  // Línea divisoria decorativa (desplazada si hay logo)
-  const dividerY = logoImage ? 138 : 78;
+  // Línea divisoria decorativa
+  const dividerY = 78;
   ctx.strokeStyle = '#cbd5e1';
   ctx.lineWidth = 1.5;
   ctx.beginPath();
