@@ -18,7 +18,7 @@ import {
   saveStoredFiles,
 } from './types/workspace';
 import { useThemeProvider, ThemeContext } from './hooks/useTheme';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
 
 export const App: React.FC = () => {
   const themeValue = useThemeProvider();
@@ -100,6 +100,55 @@ export const App: React.FC = () => {
     outputs,
     getFlowchartElement: () => flowchartContainerRef.current,
   });
+
+  // Estado para toast de confirmación de reinicio de motor
+  const [resetToastMessage, setResetToastMessage] = useState<string | null>(null);
+  const resetToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showResetToast = useCallback((msg: string) => {
+    setResetToastMessage(msg);
+    if (resetToastTimeoutRef.current) clearTimeout(resetToastTimeoutRef.current);
+    resetToastTimeoutRef.current = setTimeout(() => {
+      setResetToastMessage(null);
+    }, 3200);
+  }, []);
+
+  // Manejador de Reinicio / Recarga del IDE (Soft & Hard Reset)
+  const handleResetIDE = useCallback(
+    async (event: React.MouseEvent) => {
+      // B. Hard Reset (Shift + Clic - Recarga Forzada de PWA):
+      if (event.shiftKey) {
+        if ('caches' in window) {
+          try {
+            const cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map((name) => caches.delete(name)));
+          } catch (err) {
+            console.warn('[PWA] Error limpiando caches:', err);
+          }
+        }
+        if ('serviceWorker' in navigator) {
+          try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(registrations.map((r) => r.unregister()));
+          } catch (err) {
+            console.warn('[PWA] Error desregistrando service workers:', err);
+          }
+        }
+        window.location.reload();
+        return;
+      }
+
+      // A. Soft Reset (Clic Normal - Reinicio de Motor en Caliente):
+      // 1 & 2. Destruir sesión del worker y reinstanciar limpio
+      stop();
+      // 3 & 4. Limpiar consola I/O, cancelar Leer y poner en IDLE
+      clearConsole();
+      // 5. Preservar intacto el código del usuario en el editor y el archivo activo (no se altera activeFile)
+      // 6. Mostrar notificación discreta
+      showResetToast('Motor de ejecución reiniciado correctamente');
+    },
+    [stop, clearConsole, showResetToast]
+  );
 
   // Ejecutar el archivo activo
   const handleRun = useCallback(() => {
@@ -205,6 +254,7 @@ export const App: React.FC = () => {
           isGuardEnabled={isGuardEnabled}
           onRun={handleRun}
           onStop={stop}
+          onResetIDE={handleResetIDE}
           onToggleGuard={toggleGuard}
           onOpenExportModal={openExportModal}
           isSidebarOpen={isSidebarOpen}
@@ -221,6 +271,20 @@ export const App: React.FC = () => {
             <button
               onClick={clearToast}
               className="p-1 text-rose-400 hover:text-rose-100 hover:bg-rose-900/50 rounded transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* Toast de confirmación de Soft Reset del motor */}
+        {resetToastMessage && (
+          <div className="fixed top-14 right-6 z-50 flex items-center gap-2.5 px-4 py-2.5 bg-emerald-950/90 border border-emerald-600/40 text-emerald-200 rounded-md shadow-2xl text-xs backdrop-blur-md animate-in slide-from-top-2 duration-200">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span className="font-medium">{resetToastMessage}</span>
+            <button
+              onClick={() => setResetToastMessage(null)}
+              className="p-1 text-emerald-400 hover:text-emerald-100 hover:bg-emerald-900/50 rounded transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>

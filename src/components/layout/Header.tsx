@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Sun,
   Moon,
+  RotateCcw,
 } from 'lucide-react';
 import { RunnerStatus } from '../../hooks/usePseudocodeRunner';
 import { ModeSwitch, AppMode } from './ModeSwitch';
@@ -23,6 +24,7 @@ interface HeaderProps {
   isGuardEnabled: boolean;
   onRun: () => void;
   onStop: () => void;
+  onResetIDE: (event: React.MouseEvent) => void;
   onToggleGuard: () => void;
   onOpenExportModal: () => void;
   isSidebarOpen: boolean;
@@ -38,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
   isGuardEnabled,
   onRun,
   onStop,
+  onResetIDE,
   onToggleGuard,
   onOpenExportModal,
   isSidebarOpen,
@@ -84,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Conmutador de Modo */}
         <ModeSwitch mode={mode} onModeChange={onModeChange} />
 
-        {/* Zona de Ejecución (Play / Stop) */}
+        {/* Zona de Ejecución (Play / Stop / Reiniciar) */}
         {mode === 'code' && (
           <div className="flex items-center space-x-2">
             {!isRunning ? (
@@ -109,6 +112,16 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>Detener</span>
               </button>
             )}
+
+            {/* Botón [ 🔄 Reiniciar IDE ] */}
+            <button
+              onClick={onResetIDE}
+              title="Haz clic para reiniciar la consola y el motor. Mantén presionado Shift + Clic para recargar la app por completo."
+              className="flex items-center space-x-1.5 px-2.5 py-1 bg-[var(--bg-surface-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] hover:border-sky-500/40 rounded text-xs font-medium transition-all shadow-xs active:scale-95 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
+              <span className="hidden sm:inline">Reiniciar IDE</span>
+            </button>
 
             {/* Micro-indicador de estado de ejecución */}
             <div className="hidden xl:flex items-center text-[11px] font-mono text-[var(--text-secondary)]">
