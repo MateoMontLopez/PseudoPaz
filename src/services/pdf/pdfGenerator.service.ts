@@ -41,6 +41,35 @@ export interface GeneratePdfOptions {
 }
 
 /**
+ * Pre-carga la imagen del logo institucional desde la carpeta public/ como un HTMLImageElement
+ * listo para ser dibujado en el canvas de alta resolución del encabezado PDF.
+ * Retorna null si la imagen no puede cargarse (fallback elegante sin logo).
+ */
+async function loadLogoImage(): Promise<HTMLImageElement | null> {
+  try {
+    const response = await fetch('/logo-universidad.png');
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+
+    return new Promise<HTMLImageElement | null>((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve(img);
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve(null);
+      };
+      img.src = objectUrl;
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Genera y descarga el documento PDF con certificación de autenticidad criptográfica e inmovilización anti-copia.
  * Todo el contenido sensible se incrusta como capas visuales rasterizadas de alta resolución (300 DPI)
  * con la marca de agua y hashes criptográficos fusionados en los píxeles, haciendo imposible la selección o copia de texto.
@@ -60,6 +89,9 @@ export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<
 
   const content: Content[] = [];
 
+  // ================= 0. PRE-CARGA DEL LOGO INSTITUCIONAL =================
+  const logoImage = await loadLogoImage();
+
   // ================= 1. MEMBRETE Y CREDENCIALES (INALTERABLE / NO COPIABLE) =================
   const headerCardImage = renderHeaderCard({
     studentName,
@@ -67,6 +99,7 @@ export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<
     course,
     workTitle,
     fingerprint,
+    logoImage,
   });
 
   content.push({
