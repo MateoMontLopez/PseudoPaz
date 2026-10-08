@@ -31,6 +31,8 @@ interface HeaderProps {
   onToggleSidebar: () => void;
   isGuideOpen: boolean;
   onToggleGuide: () => void;
+  onGoHome?: () => void;
+  onOpenAuditor?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -47,6 +49,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSidebar,
   isGuideOpen,
   onToggleGuide,
+  onGoHome,
+  onOpenAuditor,
 }) => {
   const { toggleTheme, isDark } = useTheme();
   const isRunning = status === 'running' || status === 'waiting_input';
@@ -67,7 +71,11 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </button>
 
-        <div className="flex items-center space-x-2">
+        <div
+          onClick={onGoHome}
+          className={`flex items-center space-x-2 ${onGoHome ? 'cursor-pointer hover:opacity-85 transition-opacity' : ''}`}
+          title={onGoHome ? 'Volver a la pantalla de bienvenida (Inicio)' : undefined}
+        >
           <div className="flex items-center justify-center w-6 h-6 rounded bg-sky-500/15 border border-sky-400/40 text-sky-500 dark:text-sky-400 font-bold font-mono text-xs shadow-xs">
             λ
           </div>
@@ -189,6 +197,18 @@ export const Header: React.FC<HeaderProps> = ({
           <FileDown className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Exportar PDF</span>
         </button>
+
+        {/* Botón [ 🛡️ Auditor ] */}
+        {onOpenAuditor && (
+          <button
+            onClick={onOpenAuditor}
+            title="Auditor Anti-Plagio y Verificador SHA-256 (Atajo: Ctrl + Shift + A)"
+            className="flex items-center space-x-1.5 px-2.5 py-1 bg-[var(--bg-surface-subtle)] hover:bg-[var(--bg-hover)] text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 border border-[var(--border-color)] hover:border-emerald-500/40 rounded text-xs font-medium transition-all shadow-xs active:scale-95 cursor-pointer"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+            <span className="hidden xl:inline">Auditor</span>
+          </button>
+        )}
 
         {/* Botón [ ⬇️ Instalar App ] (PWA) */}
         <InstallPWAButton />

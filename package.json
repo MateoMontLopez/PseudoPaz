@@ -39,6 +39,7 @@
     "codemirror": "^6.0.2",
     "html-to-image": "^1.11.13",
     "lucide-react": "^1.47.0",
+    "pdfjs-dist": "^4.0.379",
     "pdfmake": "^0.3.11",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
