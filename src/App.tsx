@@ -15,6 +15,7 @@ import { usePdfExporter } from './hooks/usePdfExporter';
 import { LandingPage } from './components/landing/LandingPage';
 import { HashAuditor } from './components/audit/HashAuditor';
 import { PinModal } from './components/auth/PinModal';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import {
   WorkspaceFile,
   loadStoredFiles,
@@ -324,12 +325,12 @@ export const App: React.FC = () => {
 
   return (
     <ThemeContext.Provider value={themeValue}>
-      {/* Modal de Autenticación Docente (PIN) */}
+      {/* Modal de Autenticación Docente (PIN) para atajo global Ctrl + Shift + A */}
       <PinModal
         isOpen={isPinModalOpen}
         onClose={() => {
           setIsPinModalOpen(false);
-          if (currentRoute === 'hash') {
+          if (currentRoute === 'hash' && !isTeacherAuthenticated) {
             navigateTo('landing');
           }
         }}
@@ -349,12 +350,29 @@ export const App: React.FC = () => {
           onEnterIDE={() => navigateTo('ide')}
           onOpenAuditor={() => navigateTo('hash')}
         />
-      ) : currentRoute === 'hash' && isTeacherAuthenticated ? (
-        /* Vista 2: Auditor Anti-Plagio y Verificador SHA-256 */
-        <HashAuditor
-          onBackToIDE={() => navigateTo('ide')}
-          onGoHome={() => navigateTo('landing')}
-        />
+      ) : currentRoute === 'hash' ? (
+        /* Vista 2: Auditor Anti-Plagio y Verificador SHA-256 (Protegido por PIN) */
+        <ProtectedRoute
+          isAuthenticated={isTeacherAuthenticated}
+          isPinModalOpen={isPinModalOpen}
+          onPinSuccess={() => {
+            setIsTeacherAuthenticated(true);
+            setIsPinModalOpen(false);
+            setCurrentRoute('hash');
+            if (window.location.pathname !== '/hash') {
+              window.history.pushState({ route: 'hash' }, '', '/hash');
+            }
+          }}
+          onPinCancel={() => {
+            setIsPinModalOpen(false);
+            navigateTo('landing');
+          }}
+        >
+          <HashAuditor
+            onBackToIDE={() => navigateTo('ide')}
+            onGoHome={() => navigateTo('landing')}
+          />
+        </ProtectedRoute>
       ) : (
         /* Vista 3: Entorno IDE de Pseudocódigo y Diagramas de Flujo */
         <div className="flex flex-col h-screen w-screen bg-[var(--bg-app)] text-[var(--text-primary)] overflow-hidden font-sans transition-colors duration-150">
@@ -374,7 +392,6 @@ export const App: React.FC = () => {
             isGuideOpen={isGuideOpen}
             onToggleGuide={() => setIsGuideOpen((prev) => !prev)}
             onGoHome={() => navigateTo('landing')}
-            onOpenAuditor={() => navigateTo('hash')}
           />
 
           {/* Toast flotante de pérdida de foco en Modo Examen */}

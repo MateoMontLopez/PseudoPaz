@@ -32,7 +32,6 @@ interface HeaderProps {
   isGuideOpen: boolean;
   onToggleGuide: () => void;
   onGoHome?: () => void;
-  onOpenAuditor?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -50,7 +49,6 @@ export const Header: React.FC<HeaderProps> = ({
   isGuideOpen,
   onToggleGuide,
   onGoHome,
-  onOpenAuditor,
 }) => {
   const { toggleTheme, isDark } = useTheme();
   const isRunning = status === 'running' || status === 'waiting_input';
@@ -197,18 +195,6 @@ export const Header: React.FC<HeaderProps> = ({
           <FileDown className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">Exportar PDF</span>
         </button>
-
-        {/* Botón [ 🛡️ Auditor ] */}
-        {onOpenAuditor && (
-          <button
-            onClick={onOpenAuditor}
-            title="Auditor Anti-Plagio y Verificador SHA-256 (Atajo: Ctrl + Shift + A)"
-            className="flex items-center space-x-1.5 px-2.5 py-1 bg-[var(--bg-surface-subtle)] hover:bg-[var(--bg-hover)] text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 border border-[var(--border-color)] hover:border-emerald-500/40 rounded text-xs font-medium transition-all shadow-xs active:scale-95 cursor-pointer"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span className="hidden xl:inline">Auditor</span>
-          </button>
-        )}
 
         {/* Botón [ ⬇️ Instalar App ] (PWA) */}
         <InstallPWAButton />
