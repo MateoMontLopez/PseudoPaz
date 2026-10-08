@@ -125,7 +125,7 @@ export const PinModal: React.FC<PinModalProps> = ({ isOpen, onClose, onSuccess }
           <div className="text-[11.5px] text-[var(--text-muted)] bg-[var(--bg-surface-subtle)] border border-[var(--border-color)] rounded-xl p-3 flex items-start gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
             <span>
-              El PIN predeterminado de evaluación académica es <strong className="font-mono text-[var(--text-primary)]">1234</strong>. Puede ser configurado mediante la variable institucional <code className="font-mono text-xs">VITE_DOCENTE_PIN</code>.
+              Ingresa el PIN de seguridad asignado a los docentes de la institución para acceder a la verificación de firmas y detección de plagio.
             </span>
           </div>
 

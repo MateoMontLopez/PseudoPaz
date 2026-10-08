@@ -2,11 +2,9 @@ import React, { useEffect } from 'react';
 import {
   Code2,
   Workflow,
-  ShieldCheck,
   Cpu,
   ArrowRight,
   FileCheck2,
-  Lock,
   Sparkles,
 } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
@@ -93,21 +91,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterIDE, onOpenAudi
         </p>
 
         {/* Botón CTA Destacado */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+        <div className="mt-8 flex justify-center w-full">
           <button
             onClick={onEnterIDE}
             className="w-full sm:w-auto flex items-center justify-center space-x-2.5 px-8 py-3.5 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white rounded-2xl text-sm sm:text-base font-bold shadow-xl shadow-sky-950/25 active:scale-95 transition-all cursor-pointer"
           >
             <span>🚀 Entrar al IDE de Aprendizaje</span>
             <ArrowRight className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={onOpenAuditor}
-            className="w-full sm:w-auto flex items-center justify-center space-x-2 px-6 py-3.5 bg-[var(--bg-surface-subtle)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)] hover:border-sky-500/40 text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-2xl text-sm font-semibold transition-all cursor-pointer"
-          >
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
-            <span>Auditor Anti-Plagio (Docentes)</span>
           </button>
         </div>
 
@@ -178,19 +168,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterIDE, onOpenAudi
             <span>Escuela de Ciencias • Ingeniería Informática • Lógica y Programación</span>
           </div>
 
-          {/* Acceso discreto para el docente y atajo */}
-          <div className="flex items-center space-x-3 text-[11px]">
-            <span className="text-[var(--text-muted)] hidden md:inline font-mono">
-              Atajo docente: <kbd className="px-1.5 py-0.5 rounded bg-[var(--bg-surface)] border border-[var(--border-color)]">Ctrl+Shift+A</kbd>
-            </span>
-            <button
-              onClick={onOpenAuditor}
-              className="flex items-center space-x-1 text-[var(--text-muted)] hover:text-sky-500 transition-colors cursor-pointer"
-              title="Acceso exclusivo al panel de verificación de firmas criptográficas y detección de plagio"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Portal de Auditoría</span>
-            </button>
+          {/* Etiqueta institucional y versión */}
+          <div className="flex items-center space-x-3 text-[11px] text-[var(--text-muted)] font-mono">
+            <span>PseudoPaz v2.0 • Entorno Académico</span>
           </div>
         </div>
       </footer>
