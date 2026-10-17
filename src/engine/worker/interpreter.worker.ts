@@ -80,6 +80,7 @@ export class WorkerRuntime {
                 type: 'STEP_PAUSED',
                 line: node.line,
                 column: node.column,
+                nodeType: node.nodeType,
                 variables: env.getVariableSnapshot(),
               });
 

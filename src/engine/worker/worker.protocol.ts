@@ -53,6 +53,7 @@ export interface StepPausedMessage {
   type: 'STEP_PAUSED';
   line: number;
   column?: number;
+  nodeType?: string;
   variables?: Record<string, any>;
 }
 

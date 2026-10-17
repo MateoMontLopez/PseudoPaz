@@ -161,7 +161,12 @@ export const App: React.FC = () => {
     stop,
     provideInput,
     clearConsole,
-  } = usePseudocodeRunner();
+  } = usePseudocodeRunner({
+    onRequireInputFocus: () => {
+      // Al llegar a una sentencia 'Leer', asegurar que el panel de terminal esté desplegado
+      setIsTerminalVisible(true);
+    },
+  });
 
   // Callback de reseteo de seguridad en Modo Examen por pérdida de foco
   const handleSessionReset = useCallback(() => {

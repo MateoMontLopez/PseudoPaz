@@ -8,7 +8,7 @@ import {
 export interface ExecutionControllerCallbacks {
   onPrint: (text: string) => void;
   onWaitForInput: (variableName: string, expectedType: DataType) => void;
-  onStepPaused?: (line: number, column?: number, variables?: Record<string, any>) => void;
+  onStepPaused?: (line: number, column?: number, variables?: Record<string, any>, nodeType?: string) => void;
   onComplete: (durationMs: number) => void;
   onError: (error: WorkerExecutionError) => void;
 }
@@ -153,7 +153,7 @@ export class ExecutionController {
         this.pauseGuardTimer();
         this.isStepPaused = true;
         if (this.callbacks.onStepPaused) {
-          this.callbacks.onStepPaused(message.line, message.column, message.variables);
+          this.callbacks.onStepPaused(message.line, message.column, message.variables, message.nodeType);
         }
         break;
 

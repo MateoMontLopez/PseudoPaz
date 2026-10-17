@@ -44,9 +44,9 @@ export class InterpreterWorkerService {
         onWaitForInput: (varName, type) => {
           options.callbacks.onWaitForInput(varName, type);
         },
-        onStepPaused: (line, col, vars) => {
+        onStepPaused: (line, col, vars, nodeType) => {
           if (options.callbacks.onStepPaused) {
-            options.callbacks.onStepPaused(line, col, vars);
+            options.callbacks.onStepPaused(line, col, vars, nodeType);
           }
         },
         onComplete: (durationMs) => {
