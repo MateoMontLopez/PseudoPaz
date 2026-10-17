@@ -10,6 +10,7 @@ export enum TokenType {
   VAR = 'VAR',
   DEFINIR = 'DEFINIR',
   COMO = 'COMO',
+  DIMENSION = 'DIMENSION',
 
   // Tipos de datos estáticos
   TIPO_ENTERO = 'TIPO_ENTERO',
@@ -21,6 +22,7 @@ export enum TokenType {
   // Estructuras de control
   SI = 'SI',
   ENTONCES = 'ENTONCES',
+  SINOSI = 'SINOSI',
   SINO = 'SINO',
   FINSI = 'FINSI',
   MIENTRAS = 'MIENTRAS',
@@ -68,6 +70,8 @@ export enum TokenType {
   // Delimitadores y puntuación
   PARENTESIS_IZQ = 'PARENTESIS_IZQ', // (
   PARENTESIS_DER = 'PARENTESIS_DER', // )
+  CORCHETE_IZQ = 'CORCHETE_IZQ', // [
+  CORCHETE_DER = 'CORCHETE_DER', // ]
   COMA = 'COMA', // ,
   DOS_PUNTOS = 'DOS_PUNTOS', // :
   PUNTO_Y_COMA = 'PUNTO_Y_COMA', // ;

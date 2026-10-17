@@ -11,7 +11,7 @@ interface SyntaxItem {
   id: string;
   name: string;
   description: string;
-  category: 'structure' | 'control' | 'io';
+  category: 'structure' | 'control' | 'io' | 'arrays';
   code: string;
   badgeColor: string;
 }
@@ -54,6 +54,23 @@ FinAlgoritmo
     // instrucciones si es verdadero
 Sino
     // instrucciones si es falso
+FinSi
+`,
+  },
+  {
+    id: 'sino_si',
+    name: 'SINOSI (Encadenado)',
+    description: 'Condicional múltiple sin anidar FinSi',
+    category: 'control',
+    badgeColor: 'bg-purple-400',
+    code: `Si nota >= 90 Entonces
+    Mostrar "Excelente"
+SinoSi nota >= 70 Entonces
+    Mostrar "Aprobado"
+SinoSi nota >= 50 Entonces
+    Mostrar "Regular"
+Sino
+    Mostrar "Reprobado"
 FinSi
 `,
   },
@@ -117,6 +134,53 @@ Hasta Que condicion
     category: 'io',
     badgeColor: 'bg-rose-400',
     code: `variable <- valor
+`,
+  },
+
+  // Arreglos y Matrices
+  {
+    id: 'vector_1d',
+    name: 'VECTOR (1D)',
+    description: 'Arreglo unidimensional (Base 1)',
+    category: 'arrays',
+    badgeColor: 'bg-teal-400',
+    code: `// Ejemplo de Vector
+Algoritmo EjemploVector
+    Definir i Como Entero
+    Dimension notas[3]
+    
+    notas[1] <- 85
+    notas[2] <- 90
+    notas[3] <- 100
+    
+    Para i <- 1 Hasta 3 Con Paso 1 Hacer
+        Escribir "Nota ", i, ": ", notas[i]
+    FinPara
+FinAlgoritmo
+`,
+  },
+  {
+    id: 'matriz_2d',
+    name: 'MATRIZ (2D)',
+    description: 'Arreglo bidimensional [filas, columnas]',
+    category: 'arrays',
+    badgeColor: 'bg-teal-400',
+    code: `// Ejemplo de Matriz
+Algoritmo EjemploMatriz
+    Definir f, c Como Entero
+    Dimension tabla[2, 2]
+    
+    tabla[1, 1] <- 5
+    tabla[1, 2] <- 10
+    tabla[2, 1] <- 15
+    tabla[2, 2] <- 20
+    
+    Para f <- 1 Hasta 2 Con Paso 1 Hacer
+        Para c <- 1 Hasta 2 Con Paso 1 Hacer
+            Escribir "Posicion [", f, ",", c, "]: ", tabla[f, c]
+        FinPara
+    FinPara
+FinAlgoritmo
 `,
   },
 ];
@@ -236,6 +300,34 @@ export const SyntaxGuideDrawer: React.FC<SyntaxGuideDrawerProps> = ({
                 </div>
                 <p className="text-[10px] text-[var(--text-secondary)] mt-1">{item.description}</p>
                 <pre className="mt-1.5 p-1.5 bg-[var(--bg-app)] rounded text-[9.5px] font-mono text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] overflow-x-hidden line-clamp-2">
+                  {item.code.trim()}
+                </pre>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Sección: Arreglos y Matrices */}
+        <div>
+          <div className="flex items-center space-x-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+            <span className="w-2 h-2 rounded-full bg-teal-400"></span>
+            <span>Arreglos y Matrices</span>
+          </div>
+          <div className="space-y-2">
+            {SYNTAX_ITEMS.filter((i) => i.category === 'arrays').map((item) => (
+              <button
+                key={item.id}
+                onClick={() => onInsertSnippet(item.code)}
+                className="w-full text-left p-2.5 rounded-md bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] border border-[var(--border-color)] hover:border-teal-500/40 transition-all group cursor-pointer shadow-xs active:scale-[0.98]"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-semibold text-teal-600 dark:text-teal-400 group-hover:text-teal-500 dark:group-hover:text-teal-300">
+                    {item.name}
+                  </span>
+                  <CornerDownLeft className="w-3 h-3 text-[var(--text-muted)] group-hover:text-teal-500 dark:group-hover:text-teal-400 transition-colors" />
+                </div>
+                <p className="text-[10px] text-[var(--text-secondary)] mt-1">{item.description}</p>
+                <pre className="mt-1.5 p-1.5 bg-[var(--bg-app)] rounded text-[9.5px] font-mono text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] overflow-x-hidden line-clamp-3">
                   {item.code.trim()}
                 </pre>
               </button>

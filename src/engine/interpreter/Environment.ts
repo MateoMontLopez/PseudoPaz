@@ -19,8 +19,16 @@ export interface VariableSymbol {
   isInitialized: boolean;
 }
 
+export interface ArraySymbol {
+  readonly name: string;
+  readonly dimensions: number[];
+  type?: DataType;
+  readonly elements: Map<string, LiteralValue>;
+}
+
 export class Environment {
   private readonly symbols: Map<string, VariableSymbol> = new Map();
+  private readonly arraySymbols: Map<string, ArraySymbol> = new Map();
   private readonly parent?: Environment;
 
   constructor(parent?: Environment) {
@@ -32,6 +40,12 @@ export class Environment {
    */
   public declare(name: string, type: DataType, line: number, column: number): void {
     const key = name.toLowerCase();
+    const existingArray = this.arraySymbols.get(key);
+    if (existingArray) {
+      existingArray.type = type;
+      return;
+    }
+
     if (this.symbols.has(key)) {
       throw new RuntimeError(`La variable '${name}' ya fue declarada anteriormente en este ámbito`, line, column);
     }
@@ -41,6 +55,168 @@ export class Environment {
       type,
       isInitialized: false,
     });
+  }
+
+  /**
+   * Declara y dimensiona un arreglo o matriz (vector 1D, matriz 2D o N-D).
+   */
+  public declareArray(name: string, dimensions: number[], line: number, column: number): void {
+    const key = name.toLowerCase();
+
+    for (let i = 0; i < dimensions.length; i++) {
+      const dim = dimensions[i];
+      if (typeof dim !== 'number' || !Number.isInteger(dim) || dim <= 0) {
+        throw new RuntimeError(
+          `La dimensión ${i + 1} del arreglo '${name}' debe ser un número entero mayor a 0, se recibió '${dim}'`,
+          line,
+          column
+        );
+      }
+    }
+
+    if (this.arraySymbols.has(key)) {
+      throw new RuntimeError(`El arreglo '${name}' ya fue dimensionado anteriormente`, line, column);
+    }
+
+    let declaredType: DataType | undefined = undefined;
+    const existingVar = this.symbols.get(key);
+    if (existingVar) {
+      declaredType = existingVar.type;
+    }
+
+    this.arraySymbols.set(key, {
+      name,
+      dimensions,
+      type: declaredType,
+      elements: new Map(),
+    });
+  }
+
+  /**
+   * Asigna un valor a un elemento específico de un arreglo (indexación base 1).
+   */
+  public assignArrayElement(
+    name: string,
+    indices: number[],
+    value: LiteralValue,
+    line: number,
+    column: number
+  ): void {
+    const key = name.toLowerCase();
+    const arraySym = this.arraySymbols.get(key);
+
+    if (arraySym !== undefined) {
+      this.validateArrayIndices(arraySym, indices, line, column);
+
+      if (arraySym.type !== undefined) {
+        this.validateTypeCompatibility(arraySym.type, value, `${name}[${indices.join(', ')}]`, line, column);
+      } else {
+        arraySym.type = this.inferTypeFromValue(value);
+      }
+
+      arraySym.elements.set(indices.join(','), value);
+      return;
+    }
+
+    if (this.parent !== undefined) {
+      this.parent.assignArrayElement(name, indices, value, line, column);
+      return;
+    }
+
+    throw new RuntimeError(
+      `El arreglo '${name}' no ha sido dimensionado con 'Dimension'`,
+      line,
+      column
+    );
+  }
+
+  /**
+   * Obtiene el valor de un elemento de un arreglo (indexación base 1).
+   */
+  public getArrayElement(
+    name: string,
+    indices: number[],
+    line: number,
+    column: number
+  ): LiteralValue {
+    const key = name.toLowerCase();
+    const arraySym = this.arraySymbols.get(key);
+
+    if (arraySym !== undefined) {
+      this.validateArrayIndices(arraySym, indices, line, column);
+      const elementKey = indices.join(',');
+      const val = arraySym.elements.get(elementKey);
+
+      if (val === undefined) {
+        throw new RuntimeError(
+          `La posición [${indices.join(', ')}] del arreglo '${name}' no ha sido inicializada antes de su uso`,
+          line,
+          column
+        );
+      }
+
+      return val;
+    }
+
+    if (this.parent !== undefined) {
+      return this.parent.getArrayElement(name, indices, line, column);
+    }
+
+    throw new RuntimeError(
+      `El arreglo '${name}' no ha sido dimensionado con 'Dimension'`,
+      line,
+      column
+    );
+  }
+
+  private validateArrayIndices(
+    arraySym: ArraySymbol,
+    indices: number[],
+    line: number,
+    column: number
+  ): void {
+    if (indices.length !== arraySym.dimensions.length) {
+      throw new RuntimeError(
+        `El arreglo '${arraySym.name}' tiene ${arraySym.dimensions.length} dimensión(es), pero se accedió con ${indices.length} índice(s)`,
+        line,
+        column
+      );
+    }
+
+    for (let i = 0; i < indices.length; i++) {
+      const idx = indices[i];
+      const maxDim = arraySym.dimensions[i];
+
+      if (typeof idx !== 'number' || !Number.isInteger(idx)) {
+        throw new RuntimeError(
+          `Los índices del arreglo '${arraySym.name}' deben ser enteros, se recibió '${idx}'`,
+          line,
+          column
+        );
+      }
+
+      if (idx < 1 || idx > maxDim) {
+        throw new RuntimeError(
+          `Subíndice [${idx}] fuera de rango para el arreglo '${arraySym.name}'. El rango válido es 1..${maxDim}`,
+          line,
+          column
+        );
+      }
+    }
+  }
+
+  public getArraySymbol(name: string): ArraySymbol | undefined {
+    const key = name.toLowerCase();
+    return this.arraySymbols.get(key) ?? this.parent?.getArraySymbol(name);
+  }
+
+  public getArrayType(name: string): DataType | undefined {
+    return this.getArraySymbol(name)?.type;
+  }
+
+  public isArray(name: string): boolean {
+    const key = name.toLowerCase();
+    return this.arraySymbols.has(key) || (this.parent?.isArray(name) ?? false);
   }
 
   /**
@@ -105,7 +281,7 @@ export class Environment {
 
   public has(name: string): boolean {
     const key = name.toLowerCase();
-    return this.symbols.has(key) || (this.parent?.has(name) ?? false);
+    return this.symbols.has(key) || this.arraySymbols.has(key) || (this.parent?.has(name) ?? false);
   }
 
   /**

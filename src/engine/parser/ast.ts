@@ -11,6 +11,7 @@ export type LiteralValue = number | string | boolean;
 export enum ASTNodeType {
   PROGRAM = 'ProgramNode',
   VARIABLE_DECLARATION = 'VariableDeclarationNode',
+  DIMENSION_STATEMENT = 'DimensionStatementNode',
   ASSIGNMENT = 'AssignmentNode',
   IF_STATEMENT = 'IfStatementNode',
   WHILE_STATEMENT = 'WhileStatementNode',
@@ -21,6 +22,7 @@ export enum ASTNodeType {
   UNARY_EXPRESSION = 'UnaryExpressionNode',
   LITERAL = 'LiteralNode',
   IDENTIFIER = 'IdentifierNode',
+  ARRAY_ACCESS = 'ArrayAccessNode',
   GROUPING = 'GroupingExpressionNode',
 }
 
@@ -37,6 +39,7 @@ export type ExpressionNode =
   | UnaryExpressionNode
   | LiteralNode
   | IdentifierNode
+  | ArrayAccessNode
   | GroupingExpressionNode;
 
 export interface BinaryExpressionNode extends BaseASTNode {
@@ -63,6 +66,12 @@ export interface IdentifierNode extends BaseASTNode {
   readonly name: string;
 }
 
+export interface ArrayAccessNode extends BaseASTNode {
+  readonly nodeType: ASTNodeType.ARRAY_ACCESS;
+  readonly identifier: string;
+  readonly indices: ExpressionNode[];
+}
+
 export interface GroupingExpressionNode extends BaseASTNode {
   readonly nodeType: ASTNodeType.GROUPING;
   readonly expression: ExpressionNode;
@@ -72,6 +81,7 @@ export interface GroupingExpressionNode extends BaseASTNode {
 
 export type StatementNode =
   | VariableDeclarationNode
+  | DimensionStatementNode
   | AssignmentNode
   | IfStatementNode
   | WhileStatementNode
@@ -85,16 +95,35 @@ export interface VariableDeclarationNode extends BaseASTNode {
   readonly dataType: DataType;
 }
 
+export interface ArrayDimensionDecl {
+  readonly identifier: string;
+  readonly dimensions: ExpressionNode[];
+}
+
+export interface DimensionStatementNode extends BaseASTNode {
+  readonly nodeType: ASTNodeType.DIMENSION_STATEMENT;
+  readonly declarations: ArrayDimensionDecl[];
+}
+
 export interface AssignmentNode extends BaseASTNode {
   readonly nodeType: ASTNodeType.ASSIGNMENT;
   readonly identifier: string;
+  readonly indices?: ExpressionNode[];
   readonly value: ExpressionNode;
+}
+
+export interface ElseIfBranch {
+  readonly condition: ExpressionNode;
+  readonly body: StatementNode[];
+  readonly line: number;
+  readonly column: number;
 }
 
 export interface IfStatementNode extends BaseASTNode {
   readonly nodeType: ASTNodeType.IF_STATEMENT;
   readonly condition: ExpressionNode;
   readonly thenBranch: StatementNode[];
+  readonly elseIfBranches?: ElseIfBranch[];
   readonly elseBranch?: StatementNode[];
 }
 
@@ -118,9 +147,15 @@ export interface PrintStatementNode extends BaseASTNode {
   readonly expressions: ExpressionNode[];
 }
 
+export interface ReadTarget {
+  readonly identifier: string;
+  readonly indices?: ExpressionNode[];
+}
+
 export interface ReadStatementNode extends BaseASTNode {
   readonly nodeType: ASTNodeType.READ_STATEMENT;
   readonly identifiers: string[];
+  readonly targets?: ReadTarget[];
 }
 
 // ---------------- NODO RAÍZ DEL PROGRAMA ----------------

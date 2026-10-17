@@ -23,6 +23,8 @@ const KEYWORDS: Record<string, TokenType> = {
   var: TokenType.VAR,
   definir: TokenType.DEFINIR,
   como: TokenType.COMO,
+  dimension: TokenType.DIMENSION,
+  dimensionar: TokenType.DIMENSION,
 
   // Tipos
   entero: TokenType.TIPO_ENTERO,
@@ -37,6 +39,7 @@ const KEYWORDS: Record<string, TokenType> = {
   // Control
   si: TokenType.SI,
   entonces: TokenType.ENTONCES,
+  sinosi: TokenType.SINOSI,
   sino: TokenType.SINO,
   finsi: TokenType.FINSI,
   mientras: TokenType.MIENTRAS,
@@ -113,6 +116,12 @@ export class Lexer {
         break;
       case ')':
         this.addToken(TokenType.PARENTESIS_DER);
+        break;
+      case '[':
+        this.addToken(TokenType.CORCHETE_IZQ);
+        break;
+      case ']':
+        this.addToken(TokenType.CORCHETE_DER);
         break;
       case ',':
         this.addToken(TokenType.COMA);
@@ -364,6 +373,38 @@ export class Lexer {
         return;
       } else {
         // Revertir
+        this.current = savedCurrent;
+        this.column = savedColumn;
+      }
+    }
+
+    // Manejo especial de "Sino Si" → SinoSi (condicional encadenado)
+    if (lower === 'sino') {
+      const savedCurrent = this.current;
+      const savedColumn = this.column;
+
+      // Buscar espacios en blanco entre "Sino" y "Si"
+      while (this.peek() === ' ' || this.peek() === '\t') {
+        this.advance();
+      }
+
+      const siStart = this.current;
+      while (this.isAlpha(this.peek())) {
+        this.advance();
+      }
+
+      const nextWord = this.source.substring(siStart, this.current).toLowerCase();
+      if (nextWord === 'si') {
+        lexeme = this.source.substring(this.start, this.current);
+        this.tokens.push({
+          type: TokenType.SINOSI,
+          lexeme,
+          line: this.line,
+          column: this.startColumn,
+        });
+        return;
+      } else {
+        // Revertir: no era "Sino Si", es solo "Sino"
         this.current = savedCurrent;
         this.column = savedColumn;
       }

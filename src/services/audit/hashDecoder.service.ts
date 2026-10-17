@@ -123,8 +123,9 @@ function canonicalizeAST(node: ProgramNode): string {
       case ASTNodeType.IF_STATEMENT: {
         const ifStmt = stmt as IfStatementNode;
         const thenBody = ifStmt.thenBranch.map(canonicalizeStmt).join(';');
+        const elseIfParts = ifStmt.elseIfBranches?.map(b => `ELSEIF(${canonicalizeExpr(b.condition)},[${b.body.map(canonicalizeStmt).join(';')}])`).join(';') || '';
         const elseBody = ifStmt.elseBranch?.map(canonicalizeStmt).join(';') || '';
-        return `IF(${canonicalizeExpr(ifStmt.condition)},[${thenBody}],[${elseBody}])`;
+        return `IF(${canonicalizeExpr(ifStmt.condition)},[${thenBody}],[${elseIfParts}],[${elseBody}])`;
       }
       case ASTNodeType.WHILE_STATEMENT: {
         const whileStmt = stmt as WhileStatementNode;

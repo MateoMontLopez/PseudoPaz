@@ -16,6 +16,7 @@ import { RunnerStatus } from '../../hooks/usePseudocodeRunner';
 import { ModeSwitch, AppMode } from './ModeSwitch';
 import { InstallPWAButton } from '../pwa/InstallPWAButton';
 import { useTheme } from '../../hooks/useTheme';
+import { PLATFORM_NAME, PLATFORM_VERSION } from '../../constants/platform';
 
 interface HeaderProps {
   mode: AppMode;
@@ -81,9 +82,14 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="font-bold text-xs tracking-tight text-[var(--text-primary)] leading-tight">
               Pseudocode & DFD IDE
             </span>
-            <span className="text-[9.5px] font-mono text-[var(--text-muted)] leading-none">
-              PseudoPaz v2.0
-            </span>
+            <div className="flex items-center space-x-1.5 leading-none">
+              <span className="text-[9.5px] font-mono text-[var(--text-muted)]">
+                {PLATFORM_NAME}
+              </span>
+              <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-semibold">
+                {PLATFORM_VERSION}
+              </span>
+            </div>
           </div>
         </div>
       </div>

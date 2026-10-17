@@ -154,4 +154,74 @@ describe('Parser', () => {
 
     expect(() => parseCode(invalidCode)).toThrowError(ParserError);
   });
+
+  it('debe parsear declaraciones Dimension tanto de vectores como de matrices con [] y ()', () => {
+    const code = `
+      Dimension vector[10], matriz[3, 4];
+      Dimensionar notas(5);
+    `;
+
+    const ast = parseCode(code);
+    expect(ast.body.length).toBe(2);
+
+    const dim1 = ast.body[0] as any;
+    expect(dim1.nodeType).toBe(ASTNodeType.DIMENSION_STATEMENT);
+    expect(dim1.declarations.length).toBe(2);
+    expect(dim1.declarations[0].identifier).toBe('vector');
+    expect(dim1.declarations[0].dimensions.length).toBe(1);
+    expect(dim1.declarations[1].identifier).toBe('matriz');
+    expect(dim1.declarations[1].dimensions.length).toBe(2);
+
+    const dim2 = ast.body[1] as any;
+    expect(dim2.nodeType).toBe(ASTNodeType.DIMENSION_STATEMENT);
+    expect(dim2.declarations[0].identifier).toBe('notas');
+    expect(dim2.declarations[0].dimensions.length).toBe(1);
+  });
+
+  it('debe parsear asignación e indexación de arreglos', () => {
+    const code = `
+      notas[1] <- 85;
+      tabla[f, c] <- 10;
+      x <- notas[1] + tabla(f, c);
+    `;
+
+    const ast = parseCode(code);
+    expect(ast.body.length).toBe(3);
+
+    const assign1 = ast.body[0] as AssignmentNode;
+    expect(assign1.identifier).toBe('notas');
+    expect(assign1.indices?.length).toBe(1);
+
+    const assign2 = ast.body[1] as AssignmentNode;
+    expect(assign2.identifier).toBe('tabla');
+    expect(assign2.indices?.length).toBe(2);
+
+    const assign3 = ast.body[2] as AssignmentNode;
+    expect(assign3.value.nodeType).toBe(ASTNodeType.BINARY_EXPRESSION);
+  });
+
+  it('debe parsear condicionales encadenados con SinoSi y Sino Si sin anidar FinSi', () => {
+    const code = `
+      Si nota >= 90 Entonces
+        calificacion <- "A"
+      SinoSi nota >= 80 Entonces
+        calificacion <- "B"
+      Sino Si nota >= 70 Entonces
+        calificacion <- "C"
+      Sino
+        calificacion <- "F"
+      FinSi
+    `;
+
+    const ast = parseCode(code);
+    expect(ast.body.length).toBe(1);
+
+    const ifStmt = ast.body[0] as IfStatementNode;
+    expect(ifStmt.nodeType).toBe(ASTNodeType.IF_STATEMENT);
+    expect(ifStmt.thenBranch.length).toBe(1);
+    expect(ifStmt.elseIfBranches?.length).toBe(2);
+    expect(ifStmt.elseIfBranches![0].body.length).toBe(1);
+    expect(ifStmt.elseIfBranches![1].body.length).toBe(1);
+    expect(ifStmt.elseBranch?.length).toBe(1);
+  });
 });

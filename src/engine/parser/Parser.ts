@@ -1,14 +1,18 @@
 import { Token, TokenType } from '../lexer/tokens';
 import {
   ASTNodeType,
+  ArrayDimensionDecl,
   AssignmentNode,
   DataType,
+  DimensionStatementNode,
+  ElseIfBranch,
   ExpressionNode,
   ForStatementNode,
   IfStatementNode,
   PrintStatementNode,
   ProgramNode,
   ReadStatementNode,
+  ReadTarget,
   StatementNode,
   VariableDeclarationNode,
   WhileStatementNode,
@@ -66,6 +70,8 @@ export class Parser {
       while (!this.isAtEnd() && !this.isEndOfBlockOrProgram()) {
         if (this.check(TokenType.DEFINIR)) {
           declarations.push(this.parseDefinirDeclaration());
+        } else if (this.check(TokenType.DIMENSION)) {
+          body.push(this.parseDimensionStatement());
         } else if (this.isVarDeclarationAhead()) {
           declarations.push(this.parseVarDeclaration());
         } else {
@@ -76,15 +82,19 @@ export class Parser {
 
     // Parsea las sentencias del cuerpo
     while (!this.isAtEnd() && !this.isEndOfBlockOrProgram()) {
-      // También permitir declaraciones inline con Definir o Var
+      // También permitir declaraciones inline con Definir, Dimension o Var
       if (this.check(TokenType.DEFINIR)) {
         declarations.push(this.parseDefinirDeclaration());
+      } else if (this.check(TokenType.DIMENSION)) {
+        body.push(this.parseDimensionStatement());
       } else if (this.check(TokenType.VAR)) {
         this.advance();
         this.consumeOptionalSemicolon();
         while (!this.isAtEnd() && !this.isEndOfBlockOrProgram()) {
           if (this.check(TokenType.DEFINIR)) {
             declarations.push(this.parseDefinirDeclaration());
+          } else if (this.check(TokenType.DIMENSION)) {
+            body.push(this.parseDimensionStatement());
           } else if (this.isVarDeclarationAhead()) {
             declarations.push(this.parseVarDeclaration());
           } else {
@@ -121,6 +131,7 @@ export class Parser {
       this.check(TokenType.FINALGORITMO) ||
       this.check(TokenType.FIN) ||
       this.check(TokenType.FINSI) ||
+      this.check(TokenType.SINOSI) ||
       this.check(TokenType.SINO) ||
       this.check(TokenType.FINMIENTRAS) ||
       this.check(TokenType.FINPARA) ||
@@ -256,6 +267,9 @@ export class Parser {
     if (this.match(TokenType.MOSTRAR)) {
       return this.parsePrintStatement();
     }
+    if (this.match(TokenType.DIMENSION)) {
+      return this.parseDimensionStatement(this.previous());
+    }
     if (this.check(TokenType.IDENTIFICADOR)) {
       return this.parseAssignmentStatement();
     }
@@ -269,7 +283,11 @@ export class Parser {
   }
 
   /**
-   * Si <condicion> Entonces <sentencias> [Sino <sentencias>] FinSi
+   * Si <condicion> Entonces
+   *   <sentencias>
+   * [SinoSi <condicion> Entonces <sentencias>]*
+   * [Sino <sentencias>]
+   * FinSi
    */
   private parseIfStatement(): IfStatementNode {
     const ifToken = this.previous();
@@ -284,6 +302,7 @@ export class Parser {
     const thenBranch: StatementNode[] = [];
     while (
       !this.isAtEnd() &&
+      !this.check(TokenType.SINOSI) &&
       !this.check(TokenType.SINO) &&
       !this.check(TokenType.FINSI) &&
       !this.check(TokenType.FINALGORITMO)
@@ -291,6 +310,38 @@ export class Parser {
       thenBranch.push(this.parseStatement());
     }
 
+    // Parsear cadenas de SinoSi (else-if)
+    const elseIfBranches: ElseIfBranch[] = [];
+    while (this.match(TokenType.SINOSI)) {
+      const branchToken = this.previous();
+      const branchCondition = this.parseExpression();
+
+      this.consume(
+        TokenType.ENTONCES,
+        "Se esperaba la palabra clave 'Entonces' después de la condición del SinoSi"
+      );
+      this.consumeOptionalSemicolon();
+
+      const branchBody: StatementNode[] = [];
+      while (
+        !this.isAtEnd() &&
+        !this.check(TokenType.SINOSI) &&
+        !this.check(TokenType.SINO) &&
+        !this.check(TokenType.FINSI) &&
+        !this.check(TokenType.FINALGORITMO)
+      ) {
+        branchBody.push(this.parseStatement());
+      }
+
+      elseIfBranches.push({
+        condition: branchCondition,
+        body: branchBody,
+        line: branchToken.line,
+        column: branchToken.column,
+      });
+    }
+
+    // Parsear Sino (else) final
     let elseBranch: StatementNode[] | undefined = undefined;
     if (this.match(TokenType.SINO)) {
       this.consumeOptionalSemicolon();
@@ -311,6 +362,7 @@ export class Parser {
       nodeType: ASTNodeType.IF_STATEMENT,
       condition,
       thenBranch,
+      elseIfBranches: elseIfBranches.length > 0 ? elseIfBranches : undefined,
       elseBranch,
       line: ifToken.line,
       column: ifToken.column,
@@ -414,24 +466,105 @@ export class Parser {
   }
 
   /**
+   * Dimension <id1>[<dim1>, <dim2>], <id2>[<dim1>], ...
+   * También soporta sintaxis con paréntesis: Dimension <id1>(<dim1>, <dim2>)
+   */
+  private parseDimensionStatement(dimensionToken?: Token): DimensionStatementNode {
+    const dimToken =
+      dimensionToken ??
+      this.consume(
+        TokenType.DIMENSION,
+        "Se esperaba la palabra clave 'Dimension' o 'Dimensionar'"
+      );
+    const declarations: ArrayDimensionDecl[] = [];
+
+    do {
+      const idToken = this.consume(
+        TokenType.IDENTIFICADOR,
+        "Se esperaba el nombre del arreglo a dimensionar"
+      );
+
+      const isBracket = this.match(TokenType.CORCHETE_IZQ);
+      const isParen = !isBracket && this.match(TokenType.PARENTESIS_IZQ);
+
+      if (!isBracket && !isParen) {
+        throw new ParserError(
+          `Se esperaba '[' o '(' para definir las dimensiones del arreglo '${idToken.lexeme}'`,
+          this.peek().line,
+          this.peek().column
+        );
+      }
+
+      const closeType = isBracket ? TokenType.CORCHETE_DER : TokenType.PARENTESIS_DER;
+      const dimensions: ExpressionNode[] = [];
+
+      dimensions.push(this.parseExpression());
+      while (this.match(TokenType.COMA)) {
+        dimensions.push(this.parseExpression());
+      }
+
+      this.consume(
+        closeType,
+        isBracket
+          ? "Se esperaba ']' al final de las dimensiones del arreglo"
+          : "Se esperaba ')' al final de las dimensiones del arreglo"
+      );
+
+      declarations.push({
+        identifier: idToken.lexeme,
+        dimensions,
+      });
+    } while (this.match(TokenType.COMA));
+
+    this.consumeOptionalSemicolon();
+
+    return {
+      nodeType: ASTNodeType.DIMENSION_STATEMENT,
+      declarations,
+      line: dimToken.line,
+      column: dimToken.column,
+    };
+  }
+
+  /**
    * Leer <id1> [, <id2>, ...]
+   * También soporta elementos indexados: Leer notas[i], matriz[f, c] o matriz(f, c)
    */
   private parseReadStatement(): ReadStatementNode {
     const readToken = this.previous();
     const identifiers: string[] = [];
+    const targets: ReadTarget[] = [];
 
-    const firstId = this.consume(
-      TokenType.IDENTIFICADOR,
-      "Se esperaba el nombre de la variable después de 'Leer'"
-    );
-    identifiers.push(firstId.lexeme);
+    const parseSingleTarget = (): ReadTarget => {
+      const idToken = this.consume(
+        TokenType.IDENTIFICADOR,
+        "Se esperaba el nombre de la variable después de 'Leer'"
+      );
+      let indices: ExpressionNode[] | undefined = undefined;
+      if (this.match(TokenType.CORCHETE_IZQ)) {
+        indices = [];
+        indices.push(this.parseExpression());
+        while (this.match(TokenType.COMA)) {
+          indices.push(this.parseExpression());
+        }
+        this.consume(TokenType.CORCHETE_DER, "Se esperaba ']' tras los índices en Leer");
+      } else if (this.match(TokenType.PARENTESIS_IZQ)) {
+        indices = [];
+        indices.push(this.parseExpression());
+        while (this.match(TokenType.COMA)) {
+          indices.push(this.parseExpression());
+        }
+        this.consume(TokenType.PARENTESIS_DER, "Se esperaba ')' tras los índices en Leer");
+      }
+
+      identifiers.push(idToken.lexeme);
+      return { identifier: idToken.lexeme, indices };
+    };
+
+    targets.push(parseSingleTarget());
 
     while (this.match(TokenType.COMA)) {
-      const nextId = this.consume(
-        TokenType.IDENTIFICADOR,
-        'Se esperaba otro identificador después de la coma en Leer'
-      );
-      identifiers.push(nextId.lexeme);
+      targets.push(parseSingleTarget());
     }
 
     this.consumeOptionalSemicolon();
@@ -439,6 +572,7 @@ export class Parser {
     return {
       nodeType: ASTNodeType.READ_STATEMENT,
       identifiers,
+      targets,
       line: readToken.line,
       column: readToken.column,
     };
@@ -469,12 +603,31 @@ export class Parser {
 
   /**
    * <id> <- <expresion> o <id> = <expresion>
+   * <id>[i] <- <expresion> o <id>[f, c] <- <expresion> o <id>(i) <- <expresion>
    */
   private parseAssignmentStatement(): AssignmentNode {
     const idToken = this.consume(
       TokenType.IDENTIFICADOR,
       'Se esperaba el identificador a asignar'
     );
+
+    let indices: ExpressionNode[] | undefined = undefined;
+
+    if (this.match(TokenType.CORCHETE_IZQ)) {
+      indices = [];
+      indices.push(this.parseExpression());
+      while (this.match(TokenType.COMA)) {
+        indices.push(this.parseExpression());
+      }
+      this.consume(TokenType.CORCHETE_DER, "Se esperaba ']' tras los índices del arreglo");
+    } else if (this.match(TokenType.PARENTESIS_IZQ)) {
+      indices = [];
+      indices.push(this.parseExpression());
+      while (this.match(TokenType.COMA)) {
+        indices.push(this.parseExpression());
+      }
+      this.consume(TokenType.PARENTESIS_DER, "Se esperaba ')' tras los índices del arreglo");
+    }
 
     if (!this.match(TokenType.ASIGNACION) && !this.match(TokenType.IGUAL)) {
       throw new ParserError(
@@ -490,6 +643,7 @@ export class Parser {
     return {
       nodeType: ASTNodeType.ASSIGNMENT,
       identifier: idToken.lexeme,
+      indices,
       value,
       line: idToken.line,
       column: idToken.column,
@@ -708,11 +862,47 @@ export class Parser {
     }
 
     if (this.match(TokenType.IDENTIFICADOR)) {
+      const idToken = this.previous();
+
+      // Indexación con corchetes: matriz[f, c] o vector[i]
+      if (this.match(TokenType.CORCHETE_IZQ)) {
+        const indices: ExpressionNode[] = [];
+        indices.push(this.parseExpression());
+        while (this.match(TokenType.COMA)) {
+          indices.push(this.parseExpression());
+        }
+        this.consume(TokenType.CORCHETE_DER, "Se esperaba ']' tras el índice del arreglo");
+        return {
+          nodeType: ASTNodeType.ARRAY_ACCESS,
+          identifier: idToken.lexeme,
+          indices,
+          line: idToken.line,
+          column: idToken.column,
+        };
+      }
+
+      // Indexación con paréntesis compatible con PSeInt: matriz(f, c) o vector(i)
+      if (this.match(TokenType.PARENTESIS_IZQ)) {
+        const indices: ExpressionNode[] = [];
+        indices.push(this.parseExpression());
+        while (this.match(TokenType.COMA)) {
+          indices.push(this.parseExpression());
+        }
+        this.consume(TokenType.PARENTESIS_DER, "Se esperaba ')' tras el índice del arreglo");
+        return {
+          nodeType: ASTNodeType.ARRAY_ACCESS,
+          identifier: idToken.lexeme,
+          indices,
+          line: idToken.line,
+          column: idToken.column,
+        };
+      }
+
       return {
         nodeType: ASTNodeType.IDENTIFIER,
-        name: token.lexeme,
-        line: token.line,
-        column: token.column,
+        name: idToken.lexeme,
+        line: idToken.line,
+        column: idToken.column,
       };
     }
 

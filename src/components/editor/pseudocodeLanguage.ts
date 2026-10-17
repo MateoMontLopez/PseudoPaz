@@ -9,9 +9,12 @@ const KEYWORDS = new Set([
   'var',
   'definir',
   'como',
+  'dimension',
+  'dimensionar',
   'si',
   'entonces',
   'sino',
+  'sinosi',
   'finsi',
   'mientras',
   'hacer',
@@ -108,7 +111,7 @@ export const pseudocodeLanguage = StreamLanguage.define<ParserState>({
     }
 
     // Delimitadores
-    if (stream.match(/^[(),:;]/)) {
+    if (stream.match(/^[(),:;\[\]]/)) {
       return 'punctuation';
     }
 
