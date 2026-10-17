@@ -360,4 +360,39 @@ export class Environment {
     }
     return 'cadena';
   }
+
+  /**
+   * Obtiene una instantánea de todas las variables y arreglos definidos en el entorno
+   * para su inspección visual en el depurador paso a paso.
+   */
+  public getVariableSnapshot(): Record<string, { name: string; type?: DataType; value: any; isArray?: boolean; dimensions?: number[] }> {
+    const result: Record<string, { name: string; type?: DataType; value: any; isArray?: boolean; dimensions?: number[] }> =
+      this.parent ? this.parent.getVariableSnapshot() : {};
+
+    for (const [key, symbol] of this.symbols.entries()) {
+      result[key] = {
+        name: symbol.name,
+        type: symbol.type,
+        value: symbol.isInitialized ? symbol.value : '<no inicializado>',
+        isArray: false,
+      };
+    }
+
+    for (const [key, arrSymbol] of this.arraySymbols.entries()) {
+      const elementsObj: Record<string, any> = {};
+      for (const [elemKey, val] of arrSymbol.elements.entries()) {
+        elementsObj[elemKey] = val;
+      }
+
+      result[key] = {
+        name: arrSymbol.name,
+        type: arrSymbol.type,
+        value: elementsObj,
+        isArray: true,
+        dimensions: arrSymbol.dimensions,
+      };
+    }
+
+    return result;
+  }
 }

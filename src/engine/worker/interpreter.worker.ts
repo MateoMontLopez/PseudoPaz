@@ -15,6 +15,7 @@ import {
 export class WorkerRuntime {
   private currentInterpreter: Interpreter | null = null;
   private pendingInputResolver: ((value: string) => void) | null = null;
+  private pendingStepResolver: (() => void) | null = null;
   private readonly postMessageFn: (msg: WorkerToMainMessage) => void;
 
   constructor(postMessageFn: (msg: WorkerToMainMessage) => void) {
@@ -24,11 +25,15 @@ export class WorkerRuntime {
   public async handleMessage(message: MainToWorkerMessage): Promise<void> {
     switch (message.type) {
       case 'START_EXECUTION':
-        await this.startExecution(message.code);
+        await this.startExecution(message.code, message.mode);
         break;
 
       case 'PROVIDE_INPUT':
         this.provideInput(message.value);
+        break;
+
+      case 'STEP_NEXT':
+        this.stepNext();
         break;
 
       case 'TERMINATE':
@@ -37,8 +42,9 @@ export class WorkerRuntime {
     }
   }
 
-  private async startExecution(code: string): Promise<void> {
+  private async startExecution(code: string, mode: 'run' | 'step' = 'run'): Promise<void> {
     const startTime = performance.now();
+    const isStepMode = mode === 'step';
 
     try {
       // 1. Fase Léxica
@@ -68,6 +74,20 @@ export class WorkerRuntime {
             this.pendingInputResolver = resolve;
           });
         },
+        onStep: isStepMode
+          ? (node, env) => {
+              this.postMessageFn({
+                type: 'STEP_PAUSED',
+                line: node.line,
+                column: node.column,
+                variables: env.getVariableSnapshot(),
+              });
+
+              return new Promise<void>((resolve) => {
+                this.pendingStepResolver = resolve;
+              });
+            }
+          : undefined,
       });
 
       await this.currentInterpreter.execute(ast);
@@ -86,6 +106,7 @@ export class WorkerRuntime {
     } finally {
       this.currentInterpreter = null;
       this.pendingInputResolver = null;
+      this.pendingStepResolver = null;
     }
   }
 
@@ -97,12 +118,21 @@ export class WorkerRuntime {
     }
   }
 
+  private stepNext(): void {
+    if (this.pendingStepResolver) {
+      const resolver = this.pendingStepResolver;
+      this.pendingStepResolver = null;
+      resolver();
+    }
+  }
+
   private terminate(): void {
     if (this.currentInterpreter) {
       this.currentInterpreter.cancel();
       this.currentInterpreter = null;
     }
     this.pendingInputResolver = null;
+    this.pendingStepResolver = null;
   }
 
   private categorizeError(err: unknown): WorkerExecutionError {

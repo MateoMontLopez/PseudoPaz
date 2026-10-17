@@ -3,6 +3,7 @@ import { ExecutionController, ExecutionControllerCallbacks } from '../engine/wor
 export interface RunWorkerOptions {
   code: string;
   callbacks: ExecutionControllerCallbacks;
+  mode?: 'run' | 'step';
   timeoutMs?: number; // Por defecto 10000 ms (10s)
 }
 
@@ -43,6 +44,11 @@ export class InterpreterWorkerService {
         onWaitForInput: (varName, type) => {
           options.callbacks.onWaitForInput(varName, type);
         },
+        onStepPaused: (line, col, vars) => {
+          if (options.callbacks.onStepPaused) {
+            options.callbacks.onStepPaused(line, col, vars);
+          }
+        },
         onComplete: (durationMs) => {
           try {
             options.callbacks.onComplete(durationMs);
@@ -64,7 +70,16 @@ export class InterpreterWorkerService {
     });
 
     // 3. Iniciar ejecución
-    this.controller.run(options.code);
+    this.controller.run(options.code, options.mode ?? 'run');
+  }
+
+  /**
+   * Avanza un paso en modo depuración.
+   */
+  public stepNext(): void {
+    if (this.controller) {
+      this.controller.stepNext();
+    }
   }
 
   /**

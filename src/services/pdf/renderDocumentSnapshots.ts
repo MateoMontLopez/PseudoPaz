@@ -291,19 +291,39 @@ export function renderCodeChunk(options: CodeChunkOptions): string {
   return canvas.toDataURL('image/png');
 }
 
+import { ExecutionRunRecord } from '../../types/executionHistory';
+
 /**
- * Renderiza la consola virtual de ejecución como una tarjeta gráfica de alta resolución.
+ * Renderiza el historial de ejecuciones y pruebas realizadas como una tarjeta gráfica de alta resolución.
+ * Si se dispone de un historial estructurado de corridas, renderiza cada prueba con su estado y duración.
  */
-export function renderConsoleCard(outputs: ConsoleOutputItem[]): string | null {
-  if (outputs.length === 0) return null;
+export function renderConsoleCard(
+  outputs: ConsoleOutputItem[],
+  history?: ExecutionRunRecord[]
+): string | null {
+  const hasHistory = Array.isArray(history) && history.length > 0;
+  if (!hasHistory && outputs.length === 0) return null;
 
   const width = 1200;
   const headerH = 38;
   const lineH = 22;
-  const paddingBottom = 16;
-  const maxLines = Math.min(outputs.length, 30);
-  const displayOutputs = outputs.slice(0, maxLines);
-  const height = headerH + displayOutputs.length * lineH + paddingBottom;
+  const runHeaderH = 28;
+  const paddingBottom = 20;
+
+  // Si tenemos historial, limitar a las últimas 4 corridas para que quepa armoniosamente en el PDF
+  const runsToRender = hasHistory ? history.slice(-4) : [];
+
+  let totalContentHeight = headerH;
+  if (hasHistory) {
+    for (const run of runsToRender) {
+      totalContentHeight += runHeaderH + Math.min(run.outputs.length, 12) * lineH + 10;
+    }
+  } else {
+    totalContentHeight += Math.min(outputs.length, 30) * lineH;
+  }
+  totalContentHeight += paddingBottom;
+
+  const height = totalContentHeight;
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -328,38 +348,126 @@ export function renderConsoleCard(outputs: ConsoleOutputItem[]): string | null {
 
   ctx.fillStyle = '#cbd5e1';
   ctx.font = 'bold 12px system-ui, sans-serif';
-  ctx.fillText('REGISTRO DE EJECUCIÓN (CONSOLA VIRTUAL I/O)', 20, 24);
+  const headerTitle = hasHistory
+    ? `HISTORIAL DE EJECUCIONES Y PRUEBAS REALIZADAS (${runsToRender.length} ${runsToRender.length === 1 ? 'CORRIDA' : 'CORRIDAS'})`
+    : 'REGISTRO DE EJECUCIÓN (CONSOLA VIRTUAL I/O)';
+  ctx.fillText(headerTitle, 20, 24);
 
-  // Renderizado de líneas de la consola
-  displayOutputs.forEach((out, idx) => {
-    const yPos = headerH + idx * lineH + 16;
+  // Botones decorativos de terminal
+  const dotsX = width - 70;
+  ctx.fillStyle = '#ef4444';
+  ctx.beginPath();
+  ctx.arc(dotsX, 19, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#f59e0b';
+  ctx.beginPath();
+  ctx.arc(dotsX + 16, 19, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#10b981';
+  ctx.beginPath();
+  ctx.arc(dotsX + 32, 19, 4, 0, Math.PI * 2);
+  ctx.fill();
 
-    let prefix = '[SALIDA] ';
-    let prefixColor = '#38bdf8'; // Sky
-    let textColor = '#f1f5f9';
+  let currentY = headerH + 10;
 
-    if (out.type === 'stdin') {
-      prefix = '[ENTRADA >] ';
-      prefixColor = '#34d399'; // Emerald
-      textColor = '#a7f3d0';
-    } else if (out.type === 'error') {
-      prefix = '[ERROR] ';
-      prefixColor = '#f87171'; // Red
-      textColor = '#fecaca';
-    } else if (out.type === 'system') {
-      prefix = '[SISTEMA] ';
-      prefixColor = '#94a3b8'; // Slate
-      textColor = '#cbd5e1';
-    }
+  if (hasHistory) {
+    runsToRender.forEach((runRecord, rIdx) => {
+      // Sub-cabecera para la corrida
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(15, currentY, width - 30, runHeaderH - 4);
+      ctx.strokeStyle = '#334155';
+      ctx.strokeRect(15, currentY, width - 30, runHeaderH - 4);
 
-    ctx.font = 'bold 11px monospace';
-    ctx.fillStyle = prefixColor;
-    ctx.fillText(prefix, 20, yPos);
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 11px system-ui, sans-serif';
+      ctx.fillText(`PRUEBA #${runRecord.runIndex || rIdx + 1} • ${runRecord.timestamp}`, 26, currentY + 16);
 
-    ctx.font = '11px monospace';
-    ctx.fillStyle = textColor;
-    ctx.fillText(out.text, 115, yPos);
-  });
+      // Estado y duración
+      const statusText =
+        runRecord.status === 'completed'
+          ? `EXITOSO ${runRecord.durationMs ? `(${runRecord.durationMs} ms)` : ''}`
+          : runRecord.status === 'error'
+          ? 'ERROR'
+          : 'CANCELADO';
+      const statusColor =
+        runRecord.status === 'completed'
+          ? '#34d399'
+          : runRecord.status === 'error'
+          ? '#f87171'
+          : '#fbbf24';
+
+      ctx.fillStyle = statusColor;
+      ctx.font = 'bold 10.5px monospace';
+      ctx.fillText(`[${statusText}] Modo: ${runRecord.mode === 'step' ? 'Paso a Paso' : 'Estándar'}`, width - 340, currentY + 16);
+
+      currentY += runHeaderH + 2;
+
+      const displayLines = runRecord.outputs.slice(0, 12);
+      displayLines.forEach((out) => {
+        let prefix = '[SALIDA] ';
+        let prefixColor = '#38bdf8';
+        let textColor = '#f1f5f9';
+
+        if (out.type === 'stdin') {
+          prefix = '[ENTRADA >] ';
+          prefixColor = '#34d399';
+          textColor = '#a7f3d0';
+        } else if (out.type === 'error') {
+          prefix = '[ERROR] ';
+          prefixColor = '#f87171';
+          textColor = '#fecaca';
+        } else if (out.type === 'system') {
+          prefix = '[SISTEMA] ';
+          prefixColor = '#94a3b8';
+          textColor = '#cbd5e1';
+        }
+
+        ctx.font = 'bold 10.5px monospace';
+        ctx.fillStyle = prefixColor;
+        ctx.fillText(prefix, 28, currentY + 12);
+
+        ctx.font = '10.5px monospace';
+        ctx.fillStyle = textColor;
+        ctx.fillText(out.text, 125, currentY + 12);
+
+        currentY += lineH;
+      });
+
+      currentY += 8;
+    });
+  } else {
+    // Renderizado simple cuando solo hay salidas en memoria
+    const displayOutputs = outputs.slice(0, 30);
+    displayOutputs.forEach((out) => {
+      let prefix = '[SALIDA] ';
+      let prefixColor = '#38bdf8';
+      let textColor = '#f1f5f9';
+
+      if (out.type === 'stdin') {
+        prefix = '[ENTRADA >] ';
+        prefixColor = '#34d399';
+        textColor = '#a7f3d0';
+      } else if (out.type === 'error') {
+        prefix = '[ERROR] ';
+        prefixColor = '#f87171';
+        textColor = '#fecaca';
+      } else if (out.type === 'system') {
+        prefix = '[SISTEMA] ';
+        prefixColor = '#94a3b8';
+        textColor = '#cbd5e1';
+      }
+
+      ctx.font = 'bold 11px monospace';
+      ctx.fillStyle = prefixColor;
+      ctx.fillText(prefix, 20, currentY + 14);
+
+      ctx.font = '11px monospace';
+      ctx.fillStyle = textColor;
+      ctx.fillText(out.text, 115, currentY + 14);
+
+      currentY += lineH;
+    });
+  }
 
   // Borde perimetral
   ctx.strokeStyle = '#1e293b';

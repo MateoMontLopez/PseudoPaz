@@ -105,4 +105,52 @@ describe('Web Worker & Execution Guard', () => {
     expect(errorResult.message).toContain('Tiempo de ejecución excedido');
     expect(mockWorkerInstance?.isTerminated).toBe(true);
   });
+
+  it('debe admitir el modo depuración paso a paso emitiendo STEP_PAUSED y avanzando con STEP_NEXT', async () => {
+    const messagesToMain: WorkerToMainMessage[] = [];
+    const runtime = new WorkerRuntime((msg) => {
+      messagesToMain.push(msg);
+    });
+
+    const code = `
+      Algoritmo TestPasoAPaso
+        Definir a, b Como Entero
+        a <- 10
+        b <- 20
+        Escribir a + b
+      FinAlgoritmo
+    `;
+
+    // Iniciar en modo 'step'
+    const executionPromise = runtime.handleMessage({
+      type: 'START_EXECUTION',
+      code,
+      mode: 'step',
+    });
+
+    // Permitir tiempo para llegar al primer paso
+    await new Promise((r) => setTimeout(r, 20));
+
+    // Debe haberse pausado en la primera sentencia
+    const firstPause = messagesToMain.find((m) => m.type === 'STEP_PAUSED');
+    expect(firstPause).toBeDefined();
+
+    // Avanzar paso a paso
+    await runtime.handleMessage({ type: 'STEP_NEXT' });
+    await new Promise((r) => setTimeout(r, 20));
+
+    await runtime.handleMessage({ type: 'STEP_NEXT' });
+    await new Promise((r) => setTimeout(r, 20));
+
+    await runtime.handleMessage({ type: 'STEP_NEXT' });
+    await executionPromise;
+
+    expect(messagesToMain).toContainEqual({
+      type: 'PRINT_OUTPUT',
+      text: '30',
+    });
+
+    const completeMsg = messagesToMain.find((m) => m.type === 'EXECUTION_COMPLETE');
+    expect(completeMsg).toBeDefined();
+  });
 });

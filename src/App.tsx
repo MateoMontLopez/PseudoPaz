@@ -9,6 +9,7 @@ import { SyntaxGuideDrawer } from './components/syntax/SyntaxGuideDrawer';
 import { FlowchartCanvas } from './components/flowchart/FlowchartCanvas';
 import { AppMode } from './components/layout/ModeSwitch';
 import { ExportPdfModal } from './components/pdf/ExportPdfModal';
+import { ExecutionModal } from './components/console/ExecutionModal';
 import { usePseudocodeRunner } from './hooks/usePseudocodeRunner';
 import { useSessionGuard } from './hooks/useSessionGuard';
 import { usePdfExporter } from './hooks/usePdfExporter';
@@ -120,6 +121,8 @@ export const App: React.FC = () => {
   // Estado de visibilidad de paneles colapsables
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
+  const [isTerminalVisible, setIsTerminalVisible] = useState<boolean>(true);
+  const [isExecutionModalOpen, setIsExecutionModalOpen] = useState<boolean>(false);
 
   // Referencias a componentes para interacciones imperativas
   const codeEditorRef = useRef<CodeEditorHandle | null>(null);
@@ -149,7 +152,12 @@ export const App: React.FC = () => {
     outputs,
     inputPrompt,
     executionTimeMs,
+    isStepMode,
+    activeExecutionLine,
+    scopeVariables,
+    executionHistory,
     run,
+    step,
     stop,
     provideInput,
     clearConsole,
@@ -178,8 +186,21 @@ export const App: React.FC = () => {
   } = usePdfExporter({
     code,
     outputs,
+    executionHistory,
     getFlowchartElement: () => flowchartContainerRef.current,
   });
+
+  // Ejecutar el archivo activo
+  const handleRun = useCallback(() => {
+    if (!code.trim()) return;
+    run(code, 'run');
+  }, [code, run]);
+
+  // Ejecución paso a paso (Modo Depurador)
+  const handleStep = useCallback(() => {
+    if (!code.trim()) return;
+    step(code);
+  }, [code, step]);
 
   // Estado para toast de confirmación de reinicio de motor
   const [resetToastMessage, setResetToastMessage] = useState<string | null>(null);
@@ -229,12 +250,6 @@ export const App: React.FC = () => {
     },
     [stop, clearConsole, showResetToast]
   );
-
-  // Ejecutar el archivo activo
-  const handleRun = useCallback(() => {
-    if (!code.trim()) return;
-    run(code);
-  }, [code, run]);
 
   // Selección de archivo desde el explorador
   const handleSelectFile = useCallback(
@@ -383,8 +398,12 @@ export const App: React.FC = () => {
             status={status}
             isGuardEnabled={isGuardEnabled}
             onRun={handleRun}
+            onStep={handleStep}
             onStop={stop}
             onResetIDE={handleResetIDE}
+            onOpenExecutionModal={() => setIsExecutionModalOpen(true)}
+            isTerminalVisible={isTerminalVisible}
+            onToggleTerminal={() => setIsTerminalVisible((prev) => !prev)}
             onToggleGuard={toggleGuard}
             onOpenExportModal={openExportModal}
             isSidebarOpen={isSidebarOpen}
@@ -392,6 +411,7 @@ export const App: React.FC = () => {
             isGuideOpen={isGuideOpen}
             onToggleGuide={() => setIsGuideOpen((prev) => !prev)}
             onGoHome={() => navigateTo('landing')}
+            activeExecutionLine={activeExecutionLine}
           />
 
           {/* Toast flotante de pérdida de foco en Modo Examen */}
@@ -428,6 +448,12 @@ export const App: React.FC = () => {
             <div className={`w-full h-full ${mode === 'code' ? 'flex' : 'hidden'}`}>
               <IDELayout
                 onRunShortcut={handleRun}
+                isTerminalVisible={isTerminalVisible}
+                onToggleTerminal={() => setIsTerminalVisible((prev) => !prev)}
+                terminalOutputCount={outputs.length}
+                isExecutionRunning={
+                  status === 'running' || status === 'waiting_input' || status === 'paused_step'
+                }
                 sidebar={
                   <FileExplorer
                     files={files}
@@ -458,6 +484,7 @@ export const App: React.FC = () => {
                     filename={activeFile?.name}
                     onChange={handleCodeChange}
                     isClipboardGuardEnabled={true}
+                    activeExecutionLine={activeExecutionLine}
                   />
                 }
                 consolePanel={
@@ -468,6 +495,8 @@ export const App: React.FC = () => {
                     executionTimeMs={executionTimeMs}
                     onProvideInput={provideInput}
                     onClearConsole={clearConsole}
+                    onToggleMinimize={() => setIsTerminalVisible(false)}
+                    onOpenModal={() => setIsExecutionModalOpen(true)}
                   />
                 }
                 syntaxGuide={
@@ -504,6 +533,25 @@ export const App: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Modal Pop-Up de Ejecución Interactiva con Inspector de Variables */}
+          <ExecutionModal
+            isOpen={isExecutionModalOpen}
+            onClose={() => setIsExecutionModalOpen(false)}
+            status={status}
+            outputs={outputs}
+            inputPrompt={inputPrompt}
+            executionTimeMs={executionTimeMs}
+            isStepMode={isStepMode}
+            activeExecutionLine={activeExecutionLine}
+            scopeVariables={scopeVariables}
+            onRun={handleRun}
+            onStep={handleStep}
+            onStop={stop}
+            onProvideInput={provideInput}
+            onClearConsole={clearConsole}
+            algorithmName={activeFile?.name?.replace(/\.psc$/i, '') || 'Algoritmo'}
+          />
 
           {/* Modal de Exportación a PDF con Certificación Criptográfica */}
           <ExportPdfModal

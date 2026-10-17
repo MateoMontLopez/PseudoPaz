@@ -11,6 +11,10 @@ import {
   Sun,
   Moon,
   RotateCcw,
+  StepForward,
+  ExternalLink,
+  Terminal,
+  Sparkles,
 } from 'lucide-react';
 import { RunnerStatus } from '../../hooks/usePseudocodeRunner';
 import { ModeSwitch, AppMode } from './ModeSwitch';
@@ -24,8 +28,12 @@ interface HeaderProps {
   status: RunnerStatus;
   isGuardEnabled: boolean;
   onRun: () => void;
+  onStep?: () => void;
   onStop: () => void;
   onResetIDE: (event: React.MouseEvent) => void;
+  onOpenExecutionModal?: () => void;
+  isTerminalVisible?: boolean;
+  onToggleTerminal?: () => void;
   onToggleGuard: () => void;
   onOpenExportModal: () => void;
   isSidebarOpen: boolean;
@@ -33,6 +41,7 @@ interface HeaderProps {
   isGuideOpen: boolean;
   onToggleGuide: () => void;
   onGoHome?: () => void;
+  activeExecutionLine?: number | null;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -41,8 +50,12 @@ export const Header: React.FC<HeaderProps> = ({
   status,
   isGuardEnabled,
   onRun,
+  onStep,
   onStop,
   onResetIDE,
+  onOpenExecutionModal,
+  isTerminalVisible = true,
+  onToggleTerminal,
   onToggleGuard,
   onOpenExportModal,
   isSidebarOpen,
@@ -50,9 +63,10 @@ export const Header: React.FC<HeaderProps> = ({
   isGuideOpen,
   onToggleGuide,
   onGoHome,
+  activeExecutionLine,
 }) => {
   const { toggleTheme, isDark } = useTheme();
-  const isRunning = status === 'running' || status === 'waiting_input';
+  const isRunning = status === 'running' || status === 'waiting_input' || status === 'paused_step';
 
   return (
     <header className="h-12 w-full bg-[var(--bg-header)] border-b border-[var(--border-color)] px-3 flex items-center justify-between select-none shrink-0 z-20 transition-colors duration-150">
@@ -95,17 +109,17 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* 2. Centro: Conmutador de Modo Principal y Zona de Ejecución */}
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2.5">
         {/* Conmutador de Modo */}
         <ModeSwitch mode={mode} onModeChange={onModeChange} />
 
-        {/* Zona de Ejecución (Play / Stop / Reiniciar) */}
+        {/* Zona de Ejecución (Play / Step / Stop / Reiniciar / Pop-Up) */}
         {mode === 'code' && (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5">
             {!isRunning ? (
               <button
                 onClick={onRun}
-                title="Ejecutar código (Ctrl+Enter / F5)"
+                title="Ejecutar código completo (Ctrl+Enter / F5)"
                 className="flex items-center space-x-1.5 px-3 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded text-xs font-semibold transition-all shadow-md shadow-emerald-950/20 active:scale-95 cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5 fill-current" />
@@ -125,18 +139,52 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
             )}
 
+            {/* Botón Paso a Paso / Depuración */}
+            {onStep && (
+              <button
+                onClick={onStep}
+                title={
+                  status === 'paused_step'
+                    ? 'Avanzar a la siguiente sentencia (F10)'
+                    : 'Ejecutar paso a paso (Modo Depurador)'
+                }
+                className={`flex items-center space-x-1 px-2.5 py-1 rounded text-xs font-semibold transition-all shadow-xs active:scale-95 cursor-pointer border ${
+                  status === 'paused_step'
+                    ? 'bg-amber-500 text-slate-950 border-amber-400 hover:bg-amber-400 font-bold animate-pulse'
+                    : 'bg-[var(--bg-surface-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-[var(--border-color)] hover:border-amber-500/40'
+                }`}
+              >
+                <StepForward className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">
+                  {status === 'paused_step' ? 'Siguiente (F10)' : 'Paso a Paso'}
+                </span>
+              </button>
+            )}
+
+            {/* Botón Ventana Pop-Up de Ejecución Interactiva */}
+            {onOpenExecutionModal && (
+              <button
+                onClick={onOpenExecutionModal}
+                title="Abrir ventana emergente de ejecución interactiva con inspector de memoria"
+                className="flex items-center space-x-1 px-2 py-1 bg-[var(--bg-surface-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-sky-500 dark:hover:text-sky-400 border border-[var(--border-color)] hover:border-sky-500/40 rounded text-xs font-medium transition-all shadow-xs active:scale-95 cursor-pointer"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Pop-Up</span>
+              </button>
+            )}
+
             {/* Botón [ 🔄 Reiniciar IDE ] */}
             <button
               onClick={onResetIDE}
               title="Haz clic para reiniciar la consola y el motor. Mantén presionado Shift + Clic para recargar la app por completo."
-              className="flex items-center space-x-1.5 px-2.5 py-1 bg-[var(--bg-surface-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] hover:border-sky-500/40 rounded text-xs font-medium transition-all shadow-xs active:scale-95 cursor-pointer"
+              className="flex items-center space-x-1 px-2 py-1 bg-[var(--bg-surface-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-color)] hover:border-sky-500/40 rounded text-xs font-medium transition-all shadow-xs active:scale-95 cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
-              <span className="hidden sm:inline">Reiniciar IDE</span>
+              <span className="hidden xl:inline">Reiniciar</span>
             </button>
 
             {/* Micro-indicador de estado de ejecución */}
-            <div className="hidden xl:flex items-center text-[11px] font-mono text-[var(--text-secondary)]">
+            <div className="hidden 2xl:flex items-center text-[11px] font-mono text-[var(--text-secondary)]">
               {status === 'running' && (
                 <span className="flex items-center space-x-1 text-emerald-500 dark:text-emerald-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
@@ -149,13 +197,33 @@ export const Header: React.FC<HeaderProps> = ({
                   <span>Esperando Leer</span>
                 </span>
               )}
+              {status === 'paused_step' && (
+                <span className="flex items-center space-x-1 text-amber-500 dark:text-amber-400 font-semibold">
+                  <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                  <span>Línea {activeExecutionLine ?? '?'}</span>
+                </span>
+              )}
             </div>
           </div>
         )}
       </div>
 
-      {/* 3. Extremo Derecho: Seguridad, PWA, PDF, Guía de Sintaxis y Conmutador de Tema */}
+      {/* 3. Extremo Derecho: Seguridad, PWA, Terminal, PDF, Guía de Sintaxis y Conmutador de Tema */}
       <div className="flex items-center space-x-2">
+        {/* Conmutador de Terminal Panel Ocultable */}
+        {mode === 'code' && onToggleTerminal && (
+          <button
+            onClick={onToggleTerminal}
+            title={isTerminalVisible ? 'Ocultar panel de terminal' : 'Mostrar panel de terminal'}
+            className={`p-1.5 rounded border transition-colors cursor-pointer ${
+              isTerminalVisible
+                ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-[var(--border-color)] hover:bg-[var(--bg-hover)]'
+            }`}
+          >
+            <Terminal className="w-4 h-4" />
+          </button>
+        )}
         {/* Badge discreto de estado: Anti-Paste Activo */}
         <div
           title="Seguridad Anti-Copia: Bloqueo explícito de pegado, arrastrado y menú contextual para evaluación académica."
