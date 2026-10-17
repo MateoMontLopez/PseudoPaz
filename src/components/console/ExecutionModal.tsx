@@ -78,12 +78,15 @@ export const ExecutionModal: React.FC<ExecutionModalProps> = ({
       } else if (e.key === 'F10') {
         e.preventDefault();
         onStep();
+      } else if (((e.ctrlKey || e.metaKey) && e.key === 'Enter') || e.key === 'F5') {
+        e.preventDefault();
+        onRun();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, onStep]);
+  }, [isOpen, onClose, onStep, onRun]);
 
   if (!isOpen) return null;
 

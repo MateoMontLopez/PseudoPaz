@@ -195,9 +195,10 @@ export const App: React.FC = () => {
     getFlowchartElement: () => flowchartContainerRef.current,
   });
 
-  // Ejecutar el archivo activo
+  // Ejecutar el archivo activo y desplegar automáticamente la ventana emergente interactiva
   const handleRun = useCallback(() => {
     if (!code.trim()) return;
+    setIsExecutionModalOpen(true);
     run(code, 'run');
   }, [code, run]);
 
@@ -527,7 +528,10 @@ export const App: React.FC = () => {
             >
               <FlowchartCanvas
                 isExamMode={isGuardEnabled}
-                onRunCode={run}
+                onRunCode={(dfdCode) => {
+                  setIsExecutionModalOpen(true);
+                  run(dfdCode, 'run');
+                }}
                 onStop={stop}
                 status={status}
                 outputs={outputs}
