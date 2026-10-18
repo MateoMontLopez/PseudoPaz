@@ -72,10 +72,15 @@ export default defineConfig({
     })
   ],
   build: {
-    target: 'es2022',
+    target: 'esnext',
   },
   esbuild: {
-    target: 'es2022',
+    target: 'esnext',
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext',
+    },
   },
   worker: {
     format: 'es',

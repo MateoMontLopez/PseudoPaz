@@ -3,14 +3,16 @@ import { ExportConfig } from '../components/pdf/ExportPdfModal';
 import { generateAcademicPdf } from '../services/pdf/pdfGenerator.service';
 import { captureFlowchartCanvas } from '../services/pdf/captureCanvas';
 import { ConsoleOutputItem } from './usePseudocodeRunner';
+import { ExecutionRunRecord } from '../types/executionHistory';
 
 export interface UsePdfExporterOptions {
   code: string;
   outputs: ConsoleOutputItem[];
+  executionHistory?: ExecutionRunRecord[];
   getFlowchartElement: () => HTMLElement | null;
 }
 
-export function usePdfExporter({ code, outputs, getFlowchartElement }: UsePdfExporterOptions) {
+export function usePdfExporter({ code, outputs, executionHistory, getFlowchartElement }: UsePdfExporterOptions) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -40,6 +42,7 @@ export function usePdfExporter({ code, outputs, getFlowchartElement }: UsePdfExp
           workTitle: config.workTitle,
           code,
           outputs,
+          executionHistory,
           dfdImageBase64: dfdImage,
           exportMode: config.exportMode,
           fingerprint: config.fingerprint,

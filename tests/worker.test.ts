@@ -105,4 +105,120 @@ describe('Web Worker & Execution Guard', () => {
     expect(errorResult.message).toContain('Tiempo de ejecución excedido');
     expect(mockWorkerInstance?.isTerminated).toBe(true);
   });
+
+  it('debe admitir el modo depuración paso a paso emitiendo STEP_PAUSED y avanzando con STEP_NEXT', async () => {
+    const messagesToMain: WorkerToMainMessage[] = [];
+    const runtime = new WorkerRuntime((msg) => {
+      messagesToMain.push(msg);
+    });
+
+    const code = `
+      Algoritmo TestPasoAPaso
+        Definir a, b Como Entero
+        a <- 10
+        b <- 20
+        Escribir a + b
+      FinAlgoritmo
+    `;
+
+    // Iniciar en modo 'step'
+    const executionPromise = runtime.handleMessage({
+      type: 'START_EXECUTION',
+      code,
+      mode: 'step',
+    });
+
+    // Permitir tiempo para llegar al primer paso
+    await new Promise((r) => setTimeout(r, 20));
+
+    // Debe haberse pausado en la primera sentencia
+    const firstPause = messagesToMain.find((m) => m.type === 'STEP_PAUSED');
+    expect(firstPause).toBeDefined();
+
+    // Avanzar paso a paso
+    await runtime.handleMessage({ type: 'STEP_NEXT' });
+    await new Promise((r) => setTimeout(r, 20));
+
+    await runtime.handleMessage({ type: 'STEP_NEXT' });
+    await new Promise((r) => setTimeout(r, 20));
+
+    await runtime.handleMessage({ type: 'STEP_NEXT' });
+    await executionPromise;
+
+    expect(messagesToMain).toContainEqual({
+      type: 'PRINT_OUTPUT',
+      text: '30',
+    });
+
+    const completeMsg = messagesToMain.find((m) => m.type === 'EXECUTION_COMPLETE');
+    expect(completeMsg).toBeDefined();
+  });
+
+  it('debe pausar en sentencia Leer durante depuración, solicitar entrada y reanudar tras recibir PROVIDE_INPUT', async () => {
+    const messagesToMain: WorkerToMainMessage[] = [];
+    const runtime = new WorkerRuntime((msg) => {
+      messagesToMain.push(msg);
+    });
+
+    const code = `
+      Algoritmo TestPasoLeer
+        Definir x Como Entero
+        x <- 5
+        Leer x
+        Escribir x * 2
+      FinAlgoritmo
+    `;
+
+    const executionPromise = runtime.handleMessage({
+      type: 'START_EXECUTION',
+      code,
+      mode: 'step',
+    });
+
+    // Esperar primer paso: asignación x <- 5
+    await new Promise((r) => setTimeout(r, 20));
+    const step1 = messagesToMain.find((m) => m.type === 'STEP_PAUSED');
+    expect(step1).toBeDefined();
+    expect((step1 as any).nodeType).toBe('AssignmentNode');
+
+    // Avanzar a la sentencia Leer
+    await runtime.handleMessage({ type: 'STEP_NEXT' });
+    await new Promise((r) => setTimeout(r, 20));
+
+    const step2 = messagesToMain.filter((m) => m.type === 'STEP_PAUSED')[1];
+    expect(step2).toBeDefined();
+    expect((step2 as any).nodeType).toBe('ReadStatementNode');
+
+    // Avanzar para que el intérprete ejecute executeReadStatement
+    await runtime.handleMessage({ type: 'STEP_NEXT' });
+    await new Promise((r) => setTimeout(r, 20));
+
+    // Debe emitir WAIT_FOR_INPUT
+    const waitInput = messagesToMain.find((m) => m.type === 'WAIT_FOR_INPUT');
+    expect(waitInput).toBeDefined();
+    expect((waitInput as any).variableName).toBe('x');
+
+    // Enviar el dato ingresado por el usuario
+    await runtime.handleMessage({
+      type: 'PROVIDE_INPUT',
+      value: '25',
+    });
+    await new Promise((r) => setTimeout(r, 20));
+
+    // Debe pausar en la siguiente sentencia (Escribir)
+    const step3 = messagesToMain.filter((m) => m.type === 'STEP_PAUSED')[2];
+    expect(step3).toBeDefined();
+    expect((step3 as any).nodeType).toBe('PrintStatementNode');
+    expect((step3 as any).variables?.x?.value).toBe(25);
+
+    // Avanzar última sentencia
+    await runtime.handleMessage({ type: 'STEP_NEXT' });
+    await executionPromise;
+
+    expect(messagesToMain).toContainEqual({
+      type: 'PRINT_OUTPUT',
+      text: '50',
+    });
+  });
 });
+

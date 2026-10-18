@@ -9,6 +9,7 @@ import { SyntaxGuideDrawer } from './components/syntax/SyntaxGuideDrawer';
 import { FlowchartCanvas } from './components/flowchart/FlowchartCanvas';
 import { AppMode } from './components/layout/ModeSwitch';
 import { ExportPdfModal } from './components/pdf/ExportPdfModal';
+import { ExecutionModal } from './components/console/ExecutionModal';
 import { usePseudocodeRunner } from './hooks/usePseudocodeRunner';
 import { useSessionGuard } from './hooks/useSessionGuard';
 import { usePdfExporter } from './hooks/usePdfExporter';
@@ -18,8 +19,10 @@ import { PinModal } from './components/auth/PinModal';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import {
   WorkspaceFile,
+  DEFAULT_FILES,
   loadStoredFiles,
   saveStoredFiles,
+  clearStoredFiles,
 } from './types/workspace';
 import { useThemeProvider, ThemeContext } from './hooks/useTheme';
 import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
@@ -110,16 +113,24 @@ export const App: React.FC = () => {
   const [files, setFiles] = useState<WorkspaceFile[]>(() => loadStoredFiles());
   const [openFileIds, setOpenFileIds] = useState<string[]>(() => {
     const stored = loadStoredFiles();
-    return stored.length > 0 ? [stored[0].id] : [];
+    return stored.length > 0 ? stored.map((f) => f.id) : [];
   });
   const [activeFileId, setActiveFileId] = useState<string>(() => {
     const stored = loadStoredFiles();
     return stored.length > 0 ? stored[0].id : '';
   });
 
+  // Referencia mutable a activeFileId para garantizar actualizaciones sincrónicas sin cierres obsoletos
+  const activeFileIdRef = useRef<string>(activeFileId);
+  useEffect(() => {
+    activeFileIdRef.current = activeFileId;
+  }, [activeFileId]);
+
   // Estado de visibilidad de paneles colapsables
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
+  const [isTerminalVisible, setIsTerminalVisible] = useState<boolean>(true);
+  const [isExecutionModalOpen, setIsExecutionModalOpen] = useState<boolean>(false);
 
   // Referencias a componentes para interacciones imperativas
   const codeEditorRef = useRef<CodeEditorHandle | null>(null);
@@ -131,16 +142,17 @@ export const App: React.FC = () => {
 
   // Actualizar contenido del archivo activo y persistir
   const handleCodeChange = useCallback(
-    (newCode: string) => {
+    (newCode: string, targetFileId?: string) => {
+      const fileIdToUpdate = targetFileId || activeFileIdRef.current;
       setFiles((prevFiles) => {
         const updated = prevFiles.map((file) =>
-          file.id === activeFileId ? { ...file, content: newCode } : file
+          file.id === fileIdToUpdate ? { ...file, content: newCode } : file
         );
         saveStoredFiles(updated);
         return updated;
       });
     },
-    [activeFileId]
+    []
   );
 
   // Hook del motor de ejecución Web Worker con recolección de basura y timeout de 10s
@@ -149,25 +161,54 @@ export const App: React.FC = () => {
     outputs,
     inputPrompt,
     executionTimeMs,
+    isStepMode,
+    activeExecutionLine,
+    scopeVariables,
+    executionHistory,
     run,
+    step,
     stop,
     provideInput,
     clearConsole,
-  } = usePseudocodeRunner();
+  } = usePseudocodeRunner({
+    onRequireInputFocus: () => {
+      // Al llegar a una sentencia 'Leer', asegurar que el panel de terminal esté desplegado
+      setIsTerminalVisible(true);
+    },
+  });
 
   // Callback de reseteo de seguridad en Modo Examen por pérdida de foco
   const handleSessionReset = useCallback(() => {
     stop();
-    const resetTemplate = `Algoritmo SinTitulo\n  \nFinAlgoritmo\n`;
-    handleCodeChange(resetTemplate);
+    const defaultReset = DEFAULT_FILES;
+    setFiles(defaultReset);
+    clearStoredFiles();
+    setOpenFileIds([defaultReset[0].id]);
+    setActiveFileId(defaultReset[0].id);
     clearConsole();
-  }, [stop, handleCodeChange, clearConsole]);
+  }, [stop, clearConsole]);
 
   // Hook de seguridad de sesión (Modo Examen estricto vs Modo Práctica)
   const { isGuardEnabled, toggleGuard, toastMessage, clearToast } = useSessionGuard({
     onSessionReset: handleSessionReset,
     initialEnabled: false,
   });
+
+  // Limpieza al salir/cerrar de la plataforma ÚNICAMENTE si está en Modo Examen
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isGuardEnabled) {
+        clearStoredFiles();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handleBeforeUnload);
+    };
+  }, [isGuardEnabled]);
 
   // Hook del exportador a PDF protegido con SHA-256
   const {
@@ -178,8 +219,22 @@ export const App: React.FC = () => {
   } = usePdfExporter({
     code,
     outputs,
+    executionHistory,
     getFlowchartElement: () => flowchartContainerRef.current,
   });
+
+  // Ejecutar el archivo activo y desplegar automáticamente la ventana emergente interactiva
+  const handleRun = useCallback(() => {
+    if (!code.trim()) return;
+    setIsExecutionModalOpen(true);
+    run(code, 'run');
+  }, [code, run]);
+
+  // Ejecución paso a paso (Modo Depurador)
+  const handleStep = useCallback(() => {
+    if (!code.trim()) return;
+    step(code);
+  }, [code, step]);
 
   // Estado para toast de confirmación de reinicio de motor
   const [resetToastMessage, setResetToastMessage] = useState<string | null>(null);
@@ -229,12 +284,6 @@ export const App: React.FC = () => {
     },
     [stop, clearConsole, showResetToast]
   );
-
-  // Ejecutar el archivo activo
-  const handleRun = useCallback(() => {
-    if (!code.trim()) return;
-    run(code);
-  }, [code, run]);
 
   // Selección de archivo desde el explorador
   const handleSelectFile = useCallback(
@@ -383,8 +432,12 @@ export const App: React.FC = () => {
             status={status}
             isGuardEnabled={isGuardEnabled}
             onRun={handleRun}
+            onStep={handleStep}
             onStop={stop}
             onResetIDE={handleResetIDE}
+            onOpenExecutionModal={() => setIsExecutionModalOpen(true)}
+            isTerminalVisible={isTerminalVisible}
+            onToggleTerminal={() => setIsTerminalVisible((prev) => !prev)}
             onToggleGuard={toggleGuard}
             onOpenExportModal={openExportModal}
             isSidebarOpen={isSidebarOpen}
@@ -392,6 +445,7 @@ export const App: React.FC = () => {
             isGuideOpen={isGuideOpen}
             onToggleGuide={() => setIsGuideOpen((prev) => !prev)}
             onGoHome={() => navigateTo('landing')}
+            activeExecutionLine={activeExecutionLine}
           />
 
           {/* Toast flotante de pérdida de foco en Modo Examen */}
@@ -428,6 +482,12 @@ export const App: React.FC = () => {
             <div className={`w-full h-full ${mode === 'code' ? 'flex' : 'hidden'}`}>
               <IDELayout
                 onRunShortcut={handleRun}
+                isTerminalVisible={isTerminalVisible}
+                onToggleTerminal={() => setIsTerminalVisible((prev) => !prev)}
+                terminalOutputCount={outputs.length}
+                isExecutionRunning={
+                  status === 'running' || status === 'waiting_input' || status === 'paused_step'
+                }
                 sidebar={
                   <FileExplorer
                     files={files}
@@ -453,11 +513,13 @@ export const App: React.FC = () => {
                 }
                 editor={
                   <CodeEditor
+                    key={activeFileId}
                     ref={codeEditorRef}
                     value={code}
                     filename={activeFile?.name}
                     onChange={handleCodeChange}
                     isClipboardGuardEnabled={true}
+                    activeExecutionLine={activeExecutionLine}
                   />
                 }
                 consolePanel={
@@ -468,6 +530,8 @@ export const App: React.FC = () => {
                     executionTimeMs={executionTimeMs}
                     onProvideInput={provideInput}
                     onClearConsole={clearConsole}
+                    onToggleMinimize={() => setIsTerminalVisible(false)}
+                    onOpenModal={() => setIsExecutionModalOpen(true)}
                   />
                 }
                 syntaxGuide={
@@ -493,7 +557,10 @@ export const App: React.FC = () => {
             >
               <FlowchartCanvas
                 isExamMode={isGuardEnabled}
-                onRunCode={run}
+                onRunCode={(dfdCode) => {
+                  setIsExecutionModalOpen(true);
+                  run(dfdCode, 'run');
+                }}
                 onStop={stop}
                 status={status}
                 outputs={outputs}
@@ -504,6 +571,25 @@ export const App: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Modal Pop-Up de Ejecución Interactiva con Inspector de Variables */}
+          <ExecutionModal
+            isOpen={isExecutionModalOpen}
+            onClose={() => setIsExecutionModalOpen(false)}
+            status={status}
+            outputs={outputs}
+            inputPrompt={inputPrompt}
+            executionTimeMs={executionTimeMs}
+            isStepMode={isStepMode}
+            activeExecutionLine={activeExecutionLine}
+            scopeVariables={scopeVariables}
+            onRun={handleRun}
+            onStep={handleStep}
+            onStop={stop}
+            onProvideInput={provideInput}
+            onClearConsole={clearConsole}
+            algorithmName={activeFile?.name?.replace(/\.psc$/i, '') || 'Algoritmo'}
+          />
 
           {/* Modal de Exportación a PDF con Certificación Criptográfica */}
           <ExportPdfModal

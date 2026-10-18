@@ -8,6 +8,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useTheme } from '../../hooks/useTheme';
+import { PLATFORM_NAME, PLATFORM_VERSION } from '../../constants/platform';
 
 interface LandingPageProps {
   onEnterIDE: () => void;
@@ -169,8 +170,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnterIDE, onOpenAudi
           </div>
 
           {/* Etiqueta institucional y versión */}
-          <div className="flex items-center space-x-3 text-[11px] text-[var(--text-muted)] font-mono">
-            <span>PseudoPaz v2.0 • Entorno Académico</span>
+          <div className="flex items-center space-x-2 text-[11px] text-[var(--text-muted)] font-mono">
+            <span className="px-2 py-0.5 rounded bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-primary)] font-semibold shadow-2xs">
+              {PLATFORM_VERSION}
+            </span>
+            <span>{PLATFORM_NAME} • Entorno Académico</span>
           </div>
         </div>
       </footer>

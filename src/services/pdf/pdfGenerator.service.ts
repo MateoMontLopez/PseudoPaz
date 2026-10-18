@@ -26,6 +26,8 @@ if (vfsFonts) {
   pdfMake.vfs = vfsFonts;
 }
 
+import { ExecutionRunRecord } from '../../types/executionHistory';
+
 export type ExportContentType = 'code_only' | 'dfd_only' | 'both';
 
 export interface GeneratePdfOptions {
@@ -35,6 +37,7 @@ export interface GeneratePdfOptions {
   workTitle: string;
   code: string;
   outputs: ConsoleOutputItem[];
+  executionHistory?: ExecutionRunRecord[];
   dfdImageBase64?: string | null;
   exportMode: ExportContentType;
   fingerprint: FingerprintResult;
@@ -73,6 +76,7 @@ export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<
     workTitle,
     code,
     outputs,
+    executionHistory,
     dfdImageBase64,
     exportMode,
     fingerprint,
@@ -120,9 +124,10 @@ export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<
       });
     });
 
-    // Consola Virtual I/O rasterizada
-    if (outputs.length > 0) {
-      const consoleImage = renderConsoleCard(outputs);
+    // Consola Virtual I/O o Historial de Ejecuciones rasterizado
+    const hasHistory = Array.isArray(executionHistory) && executionHistory.length > 0;
+    if (outputs.length > 0 || hasHistory) {
+      const consoleImage = renderConsoleCard(outputs, executionHistory);
       if (consoleImage) {
         content.push({
           image: consoleImage,

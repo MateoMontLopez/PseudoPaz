@@ -1,8 +1,10 @@
 import {
   ASTNodeType,
+  ArrayAccessNode,
   AssignmentNode,
   BinaryExpressionNode,
   DataType,
+  DimensionStatementNode,
   ExpressionNode,
   ForStatementNode,
   IfStatementNode,
@@ -10,6 +12,7 @@ import {
   PrintStatementNode,
   ProgramNode,
   ReadStatementNode,
+  ReadTarget,
   StatementNode,
   UnaryExpressionNode,
   VariableDeclarationNode,
@@ -83,6 +86,10 @@ export class Interpreter {
         this.executeVariableDeclaration(stmt, env);
         break;
 
+      case ASTNodeType.DIMENSION_STATEMENT:
+        await this.executeDimensionStatement(stmt, env);
+        break;
+
       case ASTNodeType.ASSIGNMENT:
         await this.executeAssignment(stmt, env);
         break;
@@ -114,9 +121,44 @@ export class Interpreter {
     }
   }
 
+  private async executeDimensionStatement(stmt: DimensionStatementNode, env: Environment): Promise<void> {
+    for (const decl of stmt.declarations) {
+      const evaluatedDims: number[] = [];
+      for (const dimExpr of decl.dimensions) {
+        const dimVal = await this.evaluateExpression(dimExpr, env);
+        if (typeof dimVal !== 'number' || !Number.isInteger(dimVal) || dimVal <= 0) {
+          throw new RuntimeError(
+            `El tamaño del arreglo '${decl.identifier}' debe ser un número entero positivo mayor a 0, se recibió '${String(dimVal)}'`,
+            stmt.line,
+            stmt.column
+          );
+        }
+        evaluatedDims.push(dimVal);
+      }
+      env.declareArray(decl.identifier, evaluatedDims, stmt.line, stmt.column);
+    }
+  }
+
   private async executeAssignment(stmt: AssignmentNode, env: Environment): Promise<void> {
     const value = await this.evaluateExpression(stmt.value, env);
-    env.assign(stmt.identifier, value, stmt.line, stmt.column);
+
+    if (stmt.indices && stmt.indices.length > 0) {
+      const evaluatedIndices: number[] = [];
+      for (const idxExpr of stmt.indices) {
+        const idxVal = await this.evaluateExpression(idxExpr, env);
+        if (typeof idxVal !== 'number' || !Number.isInteger(idxVal)) {
+          throw new RuntimeError(
+            `Los índices del arreglo '${stmt.identifier}' deben ser números enteros, se recibió '${typeof idxVal === 'number' ? idxVal : typeof idxVal}'`,
+            stmt.line,
+            stmt.column
+          );
+        }
+        evaluatedIndices.push(idxVal);
+      }
+      env.assignArrayElement(stmt.identifier, evaluatedIndices, value, stmt.line, stmt.column);
+    } else {
+      env.assign(stmt.identifier, value, stmt.line, stmt.column);
+    }
   }
 
   private async executeIfStatement(stmt: IfStatementNode, env: Environment): Promise<void> {
@@ -135,7 +177,35 @@ export class Interpreter {
         if (this.isCancelled) return;
         await this.executeStatement(s, env);
       }
-    } else if (stmt.elseBranch) {
+      return;
+    }
+
+    // Evaluar ramas SinoSi encadenadas
+    if (stmt.elseIfBranches) {
+      for (const branch of stmt.elseIfBranches) {
+        if (this.isCancelled) return;
+        const branchVal = await this.evaluateExpression(branch.condition, env);
+
+        if (typeof branchVal !== 'boolean') {
+          throw new RuntimeError(
+            `La condición en 'SinoSi' debe ser de tipo booleano (Verdadero o Falso), pero se evaluó a '${typeof branchVal}'`,
+            branch.line,
+            branch.column
+          );
+        }
+
+        if (branchVal) {
+          for (const s of branch.body) {
+            if (this.isCancelled) return;
+            await this.executeStatement(s, env);
+          }
+          return;
+        }
+      }
+    }
+
+    // Rama Sino final
+    if (stmt.elseBranch) {
       for (const s of stmt.elseBranch) {
         if (this.isCancelled) return;
         await this.executeStatement(s, env);
@@ -235,19 +305,43 @@ export class Interpreter {
   }
 
   private async executeReadStatement(stmt: ReadStatementNode, env: Environment): Promise<void> {
-    for (const id of stmt.identifiers) {
+    const targets: ReadTarget[] =
+      stmt.targets ??
+      stmt.identifiers.map((id) => ({
+        identifier: id,
+        indices: undefined,
+      }));
+
+    for (const target of targets) {
       if (this.isCancelled) return;
 
-      const symbol = env.getSymbol(id);
-      const expectedType: DataType = symbol?.type ?? 'cadena';
+      const expectedType: DataType = target.indices
+        ? (env.getArrayType(target.identifier) ?? 'cadena')
+        : (env.getSymbol(target.identifier)?.type ?? 'cadena');
 
       // Llamar al handler I/O asíncrono para pedir el dato al usuario
-      const rawInput = await this.io.onRead(id, expectedType);
+      const rawInput = await this.io.onRead(target.identifier, expectedType);
 
       // Convertir el input al tipo requerido
-      const convertedValue = this.parseInputToType(rawInput, expectedType, id, stmt.line, stmt.column);
+      const convertedValue = this.parseInputToType(rawInput, expectedType, target.identifier, stmt.line, stmt.column);
 
-      env.assign(id, convertedValue, stmt.line, stmt.column);
+      if (target.indices && target.indices.length > 0) {
+        const evaluatedIndices: number[] = [];
+        for (const idxExpr of target.indices) {
+          const idxVal = await this.evaluateExpression(idxExpr, env);
+          if (typeof idxVal !== 'number' || !Number.isInteger(idxVal)) {
+            throw new RuntimeError(
+              `Los índices del arreglo '${target.identifier}' deben ser números enteros, se recibió '${typeof idxVal === 'number' ? idxVal : typeof idxVal}'`,
+              stmt.line,
+              stmt.column
+            );
+          }
+          evaluatedIndices.push(idxVal);
+        }
+        env.assignArrayElement(target.identifier, evaluatedIndices, convertedValue, stmt.line, stmt.column);
+      } else {
+        env.assign(target.identifier, convertedValue, stmt.line, stmt.column);
+      }
     }
   }
 
@@ -260,6 +354,9 @@ export class Interpreter {
 
       case ASTNodeType.IDENTIFIER:
         return env.get(expr.name, expr.line, expr.column);
+
+      case ASTNodeType.ARRAY_ACCESS:
+        return this.evaluateArrayAccess(expr, env);
 
       case ASTNodeType.GROUPING:
         return this.evaluateExpression(expr.expression, env);
@@ -275,6 +372,22 @@ export class Interpreter {
         throw new Error(`Expresión no soportada: ${JSON.stringify(_exhaustive)}`);
       }
     }
+  }
+
+  private async evaluateArrayAccess(expr: ArrayAccessNode, env: Environment): Promise<LiteralValue> {
+    const evaluatedIndices: number[] = [];
+    for (const idxExpr of expr.indices) {
+      const idxVal = await this.evaluateExpression(idxExpr, env);
+      if (typeof idxVal !== 'number' || !Number.isInteger(idxVal)) {
+        throw new RuntimeError(
+          `Los índices del arreglo '${expr.identifier}' deben ser números enteros, se recibió '${typeof idxVal === 'number' ? idxVal : typeof idxVal}'`,
+          expr.line,
+          expr.column
+        );
+      }
+      evaluatedIndices.push(idxVal);
+    }
+    return env.getArrayElement(expr.identifier, evaluatedIndices, expr.line, expr.column);
   }
 
   private async evaluateUnary(expr: UnaryExpressionNode, env: Environment): Promise<LiteralValue> {

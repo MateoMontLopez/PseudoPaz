@@ -45,3 +45,14 @@ export function saveStoredFiles(files: WorkspaceFile[]): void {
     console.warn('No se pudieron guardar los archivos en el almacenamiento:', err);
   }
 }
+
+export function clearStoredFiles(): void {
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_FILES));
+    }
+  } catch (err) {
+    console.warn('No se pudo limpiar el almacenamiento de archivos:', err);
+  }
+}
+

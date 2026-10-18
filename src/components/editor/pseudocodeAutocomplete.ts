@@ -8,6 +8,8 @@ const SYSTEM_COMPLETIONS: Completion[] = [
   { label: 'Algoritmo', type: 'keyword', boost: 10, detail: 'Estructura principal', info: 'Inicia el bloque del algoritmo' },
   { label: 'FinAlgoritmo', type: 'keyword', boost: 9, detail: 'Fin de algoritmo' },
   { label: 'Definir', type: 'keyword', boost: 10, detail: 'Declaración de variable', info: 'Definir <var> Como <Tipo>' },
+  { label: 'Dimension', type: 'keyword', boost: 10, detail: 'Declaración de arreglos/matrices', info: 'Dimension <arreglo>[tam] o Dimension <matriz>[f, c]' },
+  { label: 'Dimensionar', type: 'keyword', boost: 9, detail: 'Declaración de arreglos (sinónimo)', info: 'Dimensionar <arreglo>[tam]' },
   { label: 'Como', type: 'keyword', boost: 8, detail: 'Especificador de tipo' },
   { label: 'Var', type: 'keyword', boost: 7, detail: 'Sección de variables' },
   { label: 'Inicio', type: 'keyword', boost: 7, detail: 'Inicio de instrucciones' },
@@ -17,6 +19,7 @@ const SYSTEM_COMPLETIONS: Completion[] = [
   { label: 'Si', type: 'keyword', boost: 10, detail: 'Condicional Si', info: 'Si <condicion> Entonces ... FinSi' },
   { label: 'Entonces', type: 'keyword', boost: 8, detail: 'Rama verdadera' },
   { label: 'Sino', type: 'keyword', boost: 8, detail: 'Rama falsa' },
+  { label: 'SinoSi', type: 'keyword', boost: 9, detail: 'Condicional encadenado', info: 'SinoSi <condicion> Entonces ... (evita anidar Si)' },
   { label: 'FinSi', type: 'keyword', boost: 9, detail: 'Fin de condicional' },
 
   // Bucles e Iteración

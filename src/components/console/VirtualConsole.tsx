@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Terminal, Trash2, Clock, AlertCircle } from 'lucide-react';
+import { Terminal, Trash2, Clock, AlertCircle, Minimize2, ExternalLink } from 'lucide-react';
 import { ConsoleOutputItem, InputPromptState, RunnerStatus } from '../../hooks/usePseudocodeRunner';
 import { ConsoleInput } from './ConsoleInput';
 
@@ -10,6 +10,8 @@ interface VirtualConsoleProps {
   executionTimeMs: number | null;
   onProvideInput: (value: string) => void;
   onClearConsole: () => void;
+  onToggleMinimize?: () => void;
+  onOpenModal?: () => void;
 }
 
 export const VirtualConsole: React.FC<VirtualConsoleProps> = ({
@@ -19,6 +21,8 @@ export const VirtualConsole: React.FC<VirtualConsoleProps> = ({
   executionTimeMs,
   onProvideInput,
   onClearConsole,
+  onToggleMinimize,
+  onOpenModal,
 }) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -45,7 +49,7 @@ export const VirtualConsole: React.FC<VirtualConsoleProps> = ({
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5">
           {outputs.length > 0 && (
             <button
               onClick={onClearConsole}
@@ -54,6 +58,28 @@ export const VirtualConsole: React.FC<VirtualConsoleProps> = ({
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Limpiar</span>
+            </button>
+          )}
+
+          {onOpenModal && (
+            <button
+              onClick={onOpenModal}
+              title="Abrir en ventana emergente (Pop-Up interactivo)"
+              className="flex items-center gap-1 text-[11px] text-[var(--text-muted)] hover:text-sky-500 dark:hover:text-sky-400 px-2 py-1 rounded hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Pop-Up</span>
+            </button>
+          )}
+
+          {onToggleMinimize && (
+            <button
+              onClick={onToggleMinimize}
+              title="Ocultar / Minimizar panel de terminal"
+              className="flex items-center gap-1 text-[11px] text-[var(--text-muted)] hover:text-[var(--text-primary)] px-2 py-1 rounded hover:bg-[var(--bg-hover)] transition-colors cursor-pointer"
+            >
+              <Minimize2 className="w-3.5 h-3.5" />
+              <span className="hidden md:inline">Ocultar</span>
             </button>
           )}
         </div>

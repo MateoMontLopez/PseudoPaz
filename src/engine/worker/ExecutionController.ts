@@ -8,6 +8,7 @@ import {
 export interface ExecutionControllerCallbacks {
   onPrint: (text: string) => void;
   onWaitForInput: (variableName: string, expectedType: DataType) => void;
+  onStepPaused?: (line: number, column?: number, variables?: Record<string, any>, nodeType?: string) => void;
   onComplete: (durationMs: number) => void;
   onError: (error: WorkerExecutionError) => void;
 }
@@ -26,6 +27,7 @@ export class ExecutionController {
 
   private isRunning: boolean = false;
   private isWaitingInput: boolean = false;
+  private isStepPaused: boolean = false;
   private timerId: ReturnType<typeof setTimeout> | null = null;
   private activeComputeStartTime: number = 0;
   private accumulatedComputeMs: number = 0;
@@ -39,13 +41,14 @@ export class ExecutionController {
   /**
    * Inicia la ejecución de código en un nuevo Web Worker protegido.
    */
-  public run(code: string): void {
+  public run(code: string, mode: 'run' | 'step' = 'run'): void {
     // Si ya había una ejecución en curso, terminarla primero
     this.terminate();
 
     this.worker = this.workerFactory();
     this.isRunning = true;
     this.isWaitingInput = false;
+    this.isStepPaused = false;
     this.accumulatedComputeMs = 0;
 
     this.worker.onmessage = (event: MessageEvent<WorkerToMainMessage>) => {
@@ -55,6 +58,7 @@ export class ExecutionController {
     this.worker.onerror = (err) => {
       this.clearGuardTimer();
       this.isRunning = false;
+      this.isStepPaused = false;
       this.callbacks.onError({
         phase: 'unknown',
         message: `Error interno del Worker: ${err.message}`,
@@ -67,8 +71,26 @@ export class ExecutionController {
     const startMsg: MainToWorkerMessage = {
       type: 'START_EXECUTION',
       code,
+      mode,
     };
     this.worker.postMessage(startMsg);
+  }
+
+  /**
+   * Envía la orden para avanzar un paso en modo depuración.
+   */
+  public stepNext(): void {
+    if (!this.isRunning || !this.worker || !this.isStepPaused) {
+      return;
+    }
+
+    this.isStepPaused = false;
+    this.startGuardTimer();
+
+    const msg: MainToWorkerMessage = {
+      type: 'STEP_NEXT',
+    };
+    this.worker.postMessage(msg);
   }
 
   /**
@@ -97,6 +119,7 @@ export class ExecutionController {
     this.clearGuardTimer();
     this.isRunning = false;
     this.isWaitingInput = false;
+    this.isStepPaused = false;
 
     if (this.worker) {
       try {
@@ -125,9 +148,19 @@ export class ExecutionController {
         this.callbacks.onWaitForInput(message.variableName, message.expectedType);
         break;
 
+      case 'STEP_PAUSED':
+        // Pausar el guardián de timeout mientras el usuario inspecciona el paso
+        this.pauseGuardTimer();
+        this.isStepPaused = true;
+        if (this.callbacks.onStepPaused) {
+          this.callbacks.onStepPaused(message.line, message.column, message.variables, message.nodeType);
+        }
+        break;
+
       case 'EXECUTION_COMPLETE':
         this.clearGuardTimer();
         this.isRunning = false;
+        this.isStepPaused = false;
         this.callbacks.onComplete(message.executionTimeMs);
         this.terminate();
         break;
@@ -135,6 +168,7 @@ export class ExecutionController {
       case 'EXECUTION_ERROR':
         this.clearGuardTimer();
         this.isRunning = false;
+        this.isStepPaused = false;
         this.callbacks.onError(message.error);
         this.terminate();
         break;

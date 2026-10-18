@@ -6,13 +6,15 @@ import {
   useState,
   useCallback,
 } from 'react';
-import { EditorState } from '@codemirror/state';
+import { EditorState, StateEffect, StateField } from '@codemirror/state';
 import {
   EditorView,
   keymap,
   lineNumbers,
   highlightActiveLine,
   highlightActiveLineGutter,
+  Decoration,
+  DecorationSet,
 } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { bracketMatching, indentOnInput } from '@codemirror/language';
@@ -21,6 +23,32 @@ import { pseudocodeLanguage, pseudocodeTheme } from './pseudocodeLanguage';
 import { pseudocodeCompletionSource } from './pseudocodeAutocomplete';
 import { useClipboardGuard } from './useClipboardGuard';
 import { ShieldAlert } from 'lucide-react';
+
+export const setExecutionLineEffect = StateEffect.define<number | null>();
+
+export const executionLineField = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(decorations, tr) {
+    for (const effect of tr.effects) {
+      if (effect.is(setExecutionLineEffect)) {
+        const lineNum = effect.value;
+        if (!lineNum || lineNum < 1 || lineNum > tr.state.doc.lines) {
+          return Decoration.none;
+        }
+        const line = tr.state.doc.line(lineNum);
+        return Decoration.set([
+          Decoration.line({
+            class: 'cm-debug-active-line',
+          }).range(line.from),
+        ]);
+      }
+    }
+    return decorations.map(tr.changes);
+  },
+  provide: (f) => EditorView.decorations.from(f),
+});
 
 export interface CodeEditorHandle {
   insertSnippet: (snippet: string) => void;
@@ -33,6 +61,7 @@ interface CodeEditorProps {
   onChange: (value: string) => void;
   filename?: string;
   isClipboardGuardEnabled?: boolean;
+  activeExecutionLine?: number | null;
 }
 
 export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
@@ -42,12 +71,19 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       onChange,
       filename = 'algoritmo.psc',
       isClipboardGuardEnabled = true,
+      activeExecutionLine = null,
     },
     ref
   ) => {
     const editorParentRef = useRef<HTMLDivElement | null>(null);
     const editorViewRef = useRef<EditorView | null>(null);
     const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+    const onChangeRef = useRef(onChange);
+    const isExternalDispatchRef = useRef<boolean>(false);
+
+    useEffect(() => {
+      onChangeRef.current = onChange;
+    }, [onChange]);
 
     // Inserción segura de texto en el cursor al autorizar pegado interno
     const handlePasteInternal = useCallback((textToInsert: string) => {
@@ -113,6 +149,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           indentOnInput(),
           pseudocodeLanguage,
           pseudocodeTheme,
+          executionLineField,
           autocompletion({
             override: [pseudocodeCompletionSource],
             defaultKeymap: true,
@@ -120,8 +157,8 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           }),
           keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
           EditorView.updateListener.of((update) => {
-            if (update.docChanged) {
-              onChange(update.state.doc.toString());
+            if (update.docChanged && !isExternalDispatchRef.current) {
+              onChangeRef.current(update.state.doc.toString());
             }
 
             // Actualizar número de fila y columna del cursor
@@ -146,6 +183,12 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
             },
             '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
               backgroundColor: 'rgba(56, 189, 248, 0.2) !important',
+            },
+            '.cm-debug-active-line': {
+              backgroundColor: 'rgba(234, 179, 8, 0.22) !important',
+              borderLeft: '4px solid #f59e0b !important',
+              boxShadow: 'inset 0 0 16px rgba(245, 158, 11, 0.15)',
+              transition: 'background-color 0.15s ease',
             },
             '.cm-tooltip-autocomplete': {
               backgroundColor: 'var(--bg-surface)',
@@ -177,6 +220,28 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
       };
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // Sincronizar resaltado de línea activa en modo depuración / paso a paso
+    useEffect(() => {
+      const view = editorViewRef.current;
+      if (!view) return;
+
+      view.dispatch({
+        effects: setExecutionLineEffect.of(activeExecutionLine ?? null),
+      });
+
+      if (
+        activeExecutionLine &&
+        activeExecutionLine >= 1 &&
+        activeExecutionLine <= view.state.doc.lines
+      ) {
+        const line = view.state.doc.line(activeExecutionLine);
+        view.dispatch({
+          selection: { anchor: line.from },
+          scrollIntoView: true,
+        });
+      }
+    }, [activeExecutionLine]);
+
     // Sincronizar valor externo cuando cambia el archivo activo o por reseteo
     useEffect(() => {
       const view = editorViewRef.current;
@@ -184,9 +249,14 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
 
       const currentDoc = view.state.doc.toString();
       if (value !== currentDoc) {
-        view.dispatch({
-          changes: { from: 0, to: currentDoc.length, insert: value },
-        });
+        isExternalDispatchRef.current = true;
+        try {
+          view.dispatch({
+            changes: { from: 0, to: currentDoc.length, insert: value },
+          });
+        } finally {
+          isExternalDispatchRef.current = false;
+        }
       }
     }, [value]);
 

@@ -8,6 +8,11 @@ import {
   WorkspaceFile,
   DEFAULT_ALGORITHM_TEMPLATE,
 } from '../src/hooks/useWorkspaceStore';
+import {
+  saveStoredFiles,
+  loadStoredFiles,
+  clearStoredFiles,
+} from '../src/types/workspace';
 import { InterpreterWorkerService } from '../src/services/interpreterWorker.service';
 
 describe('1. Internal Clipboard Guard Tests', () => {
@@ -70,6 +75,41 @@ describe('2. Multi-tab Workspace Persistence Tests', () => {
   it('debe contener la plantilla estándar de algoritmo', () => {
     expect(DEFAULT_ALGORITHM_TEMPLATE).toContain('Algoritmo SinTitulo');
     expect(DEFAULT_ALGORITHM_TEMPLATE).toContain('FinAlgoritmo');
+  });
+
+  it('debe persistir archivos en localStorage y limpiarlos a DEFAULT_FILES con clearStoredFiles', () => {
+    const store: Record<string, string> = {};
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store[key] ?? null,
+      setItem: (key: string, val: string) => {
+        store[key] = String(val);
+      },
+      removeItem: (key: string) => {
+        delete store[key];
+      },
+      clear: () => {
+        for (const k in store) delete store[k];
+      },
+    });
+
+    const testFiles: WorkspaceFile[] = [
+      { id: 'f1', name: 'archivo1.psc', content: 'Algoritmo A\nFinAlgoritmo' },
+      { id: 'f2', name: 'archivo2.psc', content: 'Algoritmo B\nFinAlgoritmo' },
+    ];
+
+    saveStoredFiles(testFiles as any);
+    const loaded = loadStoredFiles();
+    expect(loaded).toHaveLength(2);
+    expect(loaded[0].name).toBe('archivo1.psc');
+    expect(loaded[1].name).toBe('archivo2.psc');
+
+    // Al ejecutarse limpieza de Modo Examen
+    clearStoredFiles();
+    const afterClear = loadStoredFiles();
+    expect(afterClear).toHaveLength(1);
+    expect(afterClear[0].name).toBe('sin_titulo.psc');
+
+    vi.unstubAllGlobals();
   });
 });
 

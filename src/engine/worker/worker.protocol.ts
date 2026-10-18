@@ -14,11 +14,16 @@ export interface WorkerExecutionError {
 export interface StartExecutionMessage {
   type: 'START_EXECUTION';
   code: string;
+  mode?: 'run' | 'step';
 }
 
 export interface ProvideInputMessage {
   type: 'PROVIDE_INPUT';
   value: string;
+}
+
+export interface StepNextMessage {
+  type: 'STEP_NEXT';
 }
 
 export interface TerminateMessage {
@@ -28,6 +33,7 @@ export interface TerminateMessage {
 export type MainToWorkerMessage =
   | StartExecutionMessage
   | ProvideInputMessage
+  | StepNextMessage
   | TerminateMessage;
 
 // ---------------- MENSAJES DESDE EL WORKER (WORKER -> MAIN) ----------------
@@ -43,6 +49,14 @@ export interface WaitForInputMessage {
   expectedType: DataType;
 }
 
+export interface StepPausedMessage {
+  type: 'STEP_PAUSED';
+  line: number;
+  column?: number;
+  nodeType?: string;
+  variables?: Record<string, any>;
+}
+
 export interface ExecutionCompleteMessage {
   type: 'EXECUTION_COMPLETE';
   executionTimeMs: number;
@@ -56,5 +70,6 @@ export interface ExecutionErrorMessage {
 export type WorkerToMainMessage =
   | PrintOutputMessage
   | WaitForInputMessage
+  | StepPausedMessage
   | ExecutionCompleteMessage
   | ExecutionErrorMessage;
