@@ -78,6 +78,12 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     const editorParentRef = useRef<HTMLDivElement | null>(null);
     const editorViewRef = useRef<EditorView | null>(null);
     const [cursorPos, setCursorPos] = useState({ line: 1, col: 1 });
+    const onChangeRef = useRef(onChange);
+    const isExternalDispatchRef = useRef<boolean>(false);
+
+    useEffect(() => {
+      onChangeRef.current = onChange;
+    }, [onChange]);
 
     // Inserción segura de texto en el cursor al autorizar pegado interno
     const handlePasteInternal = useCallback((textToInsert: string) => {
@@ -151,8 +157,8 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           }),
           keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
           EditorView.updateListener.of((update) => {
-            if (update.docChanged) {
-              onChange(update.state.doc.toString());
+            if (update.docChanged && !isExternalDispatchRef.current) {
+              onChangeRef.current(update.state.doc.toString());
             }
 
             // Actualizar número de fila y columna del cursor
@@ -243,9 +249,14 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
 
       const currentDoc = view.state.doc.toString();
       if (value !== currentDoc) {
-        view.dispatch({
-          changes: { from: 0, to: currentDoc.length, insert: value },
-        });
+        isExternalDispatchRef.current = true;
+        try {
+          view.dispatch({
+            changes: { from: 0, to: currentDoc.length, insert: value },
+          });
+        } finally {
+          isExternalDispatchRef.current = false;
+        }
       }
     }, [value]);
 

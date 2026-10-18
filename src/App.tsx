@@ -19,8 +19,10 @@ import { PinModal } from './components/auth/PinModal';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import {
   WorkspaceFile,
+  DEFAULT_FILES,
   loadStoredFiles,
   saveStoredFiles,
+  clearStoredFiles,
 } from './types/workspace';
 import { useThemeProvider, ThemeContext } from './hooks/useTheme';
 import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
@@ -111,12 +113,18 @@ export const App: React.FC = () => {
   const [files, setFiles] = useState<WorkspaceFile[]>(() => loadStoredFiles());
   const [openFileIds, setOpenFileIds] = useState<string[]>(() => {
     const stored = loadStoredFiles();
-    return stored.length > 0 ? [stored[0].id] : [];
+    return stored.length > 0 ? stored.map((f) => f.id) : [];
   });
   const [activeFileId, setActiveFileId] = useState<string>(() => {
     const stored = loadStoredFiles();
     return stored.length > 0 ? stored[0].id : '';
   });
+
+  // Referencia mutable a activeFileId para garantizar actualizaciones sincrónicas sin cierres obsoletos
+  const activeFileIdRef = useRef<string>(activeFileId);
+  useEffect(() => {
+    activeFileIdRef.current = activeFileId;
+  }, [activeFileId]);
 
   // Estado de visibilidad de paneles colapsables
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
@@ -134,16 +142,17 @@ export const App: React.FC = () => {
 
   // Actualizar contenido del archivo activo y persistir
   const handleCodeChange = useCallback(
-    (newCode: string) => {
+    (newCode: string, targetFileId?: string) => {
+      const fileIdToUpdate = targetFileId || activeFileIdRef.current;
       setFiles((prevFiles) => {
         const updated = prevFiles.map((file) =>
-          file.id === activeFileId ? { ...file, content: newCode } : file
+          file.id === fileIdToUpdate ? { ...file, content: newCode } : file
         );
         saveStoredFiles(updated);
         return updated;
       });
     },
-    [activeFileId]
+    []
   );
 
   // Hook del motor de ejecución Web Worker con recolección de basura y timeout de 10s
@@ -171,16 +180,35 @@ export const App: React.FC = () => {
   // Callback de reseteo de seguridad en Modo Examen por pérdida de foco
   const handleSessionReset = useCallback(() => {
     stop();
-    const resetTemplate = `Algoritmo SinTitulo\n  \nFinAlgoritmo\n`;
-    handleCodeChange(resetTemplate);
+    const defaultReset = DEFAULT_FILES;
+    setFiles(defaultReset);
+    clearStoredFiles();
+    setOpenFileIds([defaultReset[0].id]);
+    setActiveFileId(defaultReset[0].id);
     clearConsole();
-  }, [stop, handleCodeChange, clearConsole]);
+  }, [stop, clearConsole]);
 
   // Hook de seguridad de sesión (Modo Examen estricto vs Modo Práctica)
   const { isGuardEnabled, toggleGuard, toastMessage, clearToast } = useSessionGuard({
     onSessionReset: handleSessionReset,
     initialEnabled: false,
   });
+
+  // Limpieza al salir/cerrar de la plataforma ÚNICAMENTE si está en Modo Examen
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isGuardEnabled) {
+        clearStoredFiles();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('pagehide', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('pagehide', handleBeforeUnload);
+    };
+  }, [isGuardEnabled]);
 
   // Hook del exportador a PDF protegido con SHA-256
   const {
@@ -485,6 +513,7 @@ export const App: React.FC = () => {
                 }
                 editor={
                   <CodeEditor
+                    key={activeFileId}
                     ref={codeEditorRef}
                     value={code}
                     filename={activeFile?.name}
