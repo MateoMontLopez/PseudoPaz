@@ -120,8 +120,7 @@ export const ExamExitModal: React.FC<ExamExitModalProps> = ({
             </span>
           </div>
           <p className="text-[11.5px] text-[var(--text-secondary)] leading-relaxed">
-            Ingrese el código de 4 dígitos correspondiente a la hora actual en formato de 24 horas{' '}
-            <span className="font-mono font-bold text-amber-600 dark:text-amber-400">HHMM</span> (solicítelo al profesor o evaluador a cargo).
+            Ingrese el código de 4 dígitos correspondiente (solicítelo al profesor o evaluador a cargo).
           </p>
         </div>
 
@@ -145,11 +144,10 @@ export const ExamExitModal: React.FC<ExamExitModalProps> = ({
                   setPin(sanitized);
                 }}
                 placeholder="••••"
-                className={`w-full px-4 py-2.5 bg-[var(--bg-app)] border rounded-xl font-mono text-center text-lg tracking-[0.4em] text-[var(--text-primary)] focus:outline-none transition-all placeholder:text-[var(--text-muted)] placeholder:tracking-normal ${
-                  error
-                    ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/30 animate-shake'
-                    : 'border-[var(--border-color)] focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
-                }`}
+                className={`w-full px-4 py-2.5 bg-[var(--bg-app)] border rounded-xl font-mono text-center text-lg tracking-[0.4em] text-[var(--text-primary)] focus:outline-none transition-all placeholder:text-[var(--text-muted)] placeholder:tracking-normal ${error
+                  ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/30 animate-shake'
+                  : 'border-[var(--border-color)] focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
+                  }`}
               />
             </div>
             {error && (
