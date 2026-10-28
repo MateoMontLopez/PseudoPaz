@@ -16,6 +16,7 @@ import { usePdfExporter } from './hooks/usePdfExporter';
 import { LandingPage } from './components/landing/LandingPage';
 import { HashAuditor } from './components/audit/HashAuditor';
 import { PinModal } from './components/auth/PinModal';
+import { ExamExitModal } from './components/auth/ExamExitModal';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import {
   WorkspaceFile,
@@ -131,6 +132,7 @@ export const App: React.FC = () => {
   const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
   const [isTerminalVisible, setIsTerminalVisible] = useState<boolean>(true);
   const [isExecutionModalOpen, setIsExecutionModalOpen] = useState<boolean>(false);
+  const [isExamExitModalOpen, setIsExamExitModalOpen] = useState<boolean>(false);
 
   // Referencias a componentes para interacciones imperativas
   const codeEditorRef = useRef<CodeEditorHandle | null>(null);
@@ -193,6 +195,27 @@ export const App: React.FC = () => {
     onSessionReset: handleSessionReset,
     initialEnabled: false,
   });
+
+  // Salida de Modo Examen protegida mediante clave dinámica por hora actual (HHMM)
+  const handleToggleGuard = useCallback(() => {
+    if (isGuardEnabled) {
+      setIsExamExitModalOpen(true);
+    } else {
+      toggleGuard();
+    }
+  }, [isGuardEnabled, toggleGuard]);
+
+  const handleExamExitSuccess = useCallback(() => {
+    toggleGuard();
+  }, [toggleGuard]);
+
+  const handleGoHome = useCallback(() => {
+    if (isGuardEnabled) {
+      setIsExamExitModalOpen(true);
+      return;
+    }
+    navigateTo('landing');
+  }, [isGuardEnabled, navigateTo]);
 
   // Limpieza al salir/cerrar de la plataforma ÚNICAMENTE si está en Modo Examen
   useEffect(() => {
@@ -438,13 +461,13 @@ export const App: React.FC = () => {
             onOpenExecutionModal={() => setIsExecutionModalOpen(true)}
             isTerminalVisible={isTerminalVisible}
             onToggleTerminal={() => setIsTerminalVisible((prev) => !prev)}
-            onToggleGuard={toggleGuard}
+            onToggleGuard={handleToggleGuard}
             onOpenExportModal={openExportModal}
             isSidebarOpen={isSidebarOpen}
             onToggleSidebar={() => setIsSidebarOpen((prev) => !prev)}
             isGuideOpen={isGuideOpen}
             onToggleGuide={() => setIsGuideOpen((prev) => !prev)}
-            onGoHome={() => navigateTo('landing')}
+            onGoHome={handleGoHome}
             activeExecutionLine={activeExecutionLine}
           />
 
@@ -597,6 +620,13 @@ export const App: React.FC = () => {
             onClose={closeExportModal}
             onConfirmExport={executeExport}
             code={code}
+          />
+
+          {/* Modal de Salida de Modo Examen con Clave Dinámica (HHMM) */}
+          <ExamExitModal
+            isOpen={isExamExitModalOpen}
+            onClose={() => setIsExamExitModalOpen(false)}
+            onSuccess={handleExamExitSuccess}
           />
         </div>
       )}
