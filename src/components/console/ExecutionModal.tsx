@@ -19,6 +19,7 @@ import {
   RunnerStatus,
 } from '../../hooks/usePseudocodeRunner';
 import { ConsoleInput } from './ConsoleInput';
+import { PLATFORM_VERSION } from '../../constants/platform';
 
 interface ExecutionModalProps {
   isOpen: boolean;
@@ -252,19 +253,19 @@ export const ExecutionModal: React.FC<ExecutionModalProps> = ({
               switch (item.type) {
                 case 'stdout':
                   return (
-                    <div key={item.id} className="text-[var(--text-primary)] leading-relaxed break-words whitespace-pre-wrap">
-                      {item.text}
+                    <div key={item.id} className="text-[var(--text-primary)] leading-relaxed break-words whitespace-pre-wrap font-mono min-h-[1.25rem]">
+                      {item.text || '\u00A0'}
                     </div>
                   );
                 case 'stdin':
                   return (
-                    <div key={item.id} className="text-sky-600 dark:text-sky-300 font-semibold break-words">
-                      {item.text}
+                    <div key={item.id} className="text-sky-600 dark:text-sky-300 font-semibold break-words font-mono min-h-[1.25rem]">
+                      {item.text || '\u00A0'}
                     </div>
                   );
                 case 'system':
                   return (
-                    <div key={item.id} className="text-[var(--text-muted)] text-[11px] italic py-0.5">
+                    <div key={item.id} className="text-[var(--text-muted)] text-[11px] italic py-0.5 font-mono">
                       [{item.timestamp}] {item.text}
                     </div>
                   );
@@ -272,7 +273,7 @@ export const ExecutionModal: React.FC<ExecutionModalProps> = ({
                   return (
                     <div
                       key={item.id}
-                      className="p-2.5 my-1 bg-rose-500/10 border border-rose-500/30 rounded text-rose-600 dark:text-rose-300 text-xs leading-normal whitespace-pre-wrap break-words"
+                      className="p-2.5 my-1 bg-rose-500/10 border border-rose-500/30 rounded text-rose-600 dark:text-rose-300 text-xs leading-normal whitespace-pre-wrap break-words font-mono"
                     >
                       <span className="font-semibold">{item.text}</span>
                     </div>
@@ -361,7 +362,7 @@ export const ExecutionModal: React.FC<ExecutionModalProps> = ({
             Presiona [F10] Siguiente Paso • [Esc] Cerrar Ventana
             {isStepMode && ' • Modo Depurador Activo'}
           </span>
-          <span>PseudoPaz Engine v2.1</span>
+          <span>PseudoPaz Engine {PLATFORM_VERSION}</span>
         </div>
       </div>
     </div>

@@ -6,7 +6,7 @@ import {
 } from './worker.protocol';
 
 export interface ExecutionControllerCallbacks {
-  onPrint: (text: string) => void;
+  onPrint: (text: string, sinSaltar?: boolean) => void;
   onWaitForInput: (variableName: string, expectedType: DataType) => void;
   onStepPaused?: (line: number, column?: number, variables?: Record<string, any>, nodeType?: string) => void;
   onComplete: (durationMs: number) => void;
@@ -138,7 +138,7 @@ export class ExecutionController {
   private handleWorkerMessage(message: WorkerToMainMessage): void {
     switch (message.type) {
       case 'PRINT_OUTPUT':
-        this.callbacks.onPrint(message.text);
+        this.callbacks.onPrint(message.text, message.sinSaltar);
         break;
 
       case 'WAIT_FOR_INPUT':

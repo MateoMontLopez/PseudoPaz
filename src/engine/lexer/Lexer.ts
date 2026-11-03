@@ -53,6 +53,9 @@ const KEYWORDS: Record<string, TokenType> = {
   leer: TokenType.LEER,
   mostrar: TokenType.MOSTRAR,
   escribir: TokenType.MOSTRAR,
+  imprimir: TokenType.MOSTRAR,
+  sinsaltar: TokenType.SIN_SALTAR,
+  sin_saltar: TokenType.SIN_SALTAR,
 
   // Operadores en texto
   mod: TokenType.MODULO,
@@ -405,6 +408,38 @@ export class Lexer {
         return;
       } else {
         // Revertir: no era "Sino Si", es solo "Sino"
+        this.current = savedCurrent;
+        this.column = savedColumn;
+      }
+    }
+
+    // Manejo especial de "Sin Saltar" si encontramos "sin" y la siguiente palabra es "saltar"
+    if (lower === 'sin') {
+      const savedCurrent = this.current;
+      const savedColumn = this.column;
+
+      // Buscar espacios en blanco entre "Sin" y "Saltar"
+      while (this.peek() === ' ' || this.peek() === '\t') {
+        this.advance();
+      }
+
+      const saltarStart = this.current;
+      while (this.isAlpha(this.peek())) {
+        this.advance();
+      }
+
+      const nextWord = this.source.substring(saltarStart, this.current).toLowerCase();
+      if (nextWord === 'saltar') {
+        lexeme = this.source.substring(this.start, this.current);
+        this.tokens.push({
+          type: TokenType.SIN_SALTAR,
+          lexeme,
+          line: this.line,
+          column: this.startColumn,
+        });
+        return;
+      } else {
+        // Revertir: no era "Sin Saltar", puede ser identificador "sin"
         this.current = savedCurrent;
         this.column = savedColumn;
       }

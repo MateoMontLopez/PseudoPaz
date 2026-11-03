@@ -145,6 +145,7 @@ export interface ForStatementNode extends BaseASTNode {
 export interface PrintStatementNode extends BaseASTNode {
   readonly nodeType: ASTNodeType.PRINT_STATEMENT;
   readonly expressions: ExpressionNode[];
+  readonly sinSaltar?: boolean;
 }
 
 export interface ReadTarget {

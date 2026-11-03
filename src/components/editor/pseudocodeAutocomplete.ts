@@ -38,6 +38,9 @@ const SYSTEM_COMPLETIONS: Completion[] = [
   { label: 'Leer', type: 'function', boost: 10, detail: 'Lectura de datos', info: 'Leer <variable>' },
   { label: 'Escribir', type: 'function', boost: 10, detail: 'Salida de datos', info: 'Escribir <expresion>' },
   { label: 'Mostrar', type: 'function', boost: 7, detail: 'Salida de datos (sinónimo)' },
+  { label: 'Escribir Sin Saltar', type: 'function', boost: 9, detail: 'Salida sin salto de línea', info: 'Escribir Sin Saltar <expresion>' },
+  { label: 'Sin Saltar', type: 'keyword', boost: 8, detail: 'Impresión continua en la misma línea' },
+  { label: 'SinSaltar', type: 'keyword', boost: 7, detail: 'Impresión continua en la misma línea' },
 
   // Tipos de Datos
   { label: 'Entero', type: 'type', boost: 8, detail: 'Tipo numérico entero' },

@@ -57,10 +57,11 @@ export class WorkerRuntime {
 
       // 3. Fase de Interpretación
       this.currentInterpreter = new Interpreter({
-        onPrint: (text: string) => {
+        onPrint: (text: string, sinSaltar?: boolean) => {
           this.postMessageFn({
             type: 'PRINT_OUTPUT',
             text,
+            ...(sinSaltar ? { sinSaltar: true } : {}),
           });
         },
         onRead: (variableName: string, expectedType: DataType): Promise<string> => {
