@@ -36,6 +36,7 @@ export enum TokenType {
   // Entrada y salida
   LEER = 'LEER',
   MOSTRAR = 'MOSTRAR',
+  SIN_SALTAR = 'SIN_SALTAR',
 
   // Operadores de asignación
   ASIGNACION = 'ASIGNACION', // <- o :=

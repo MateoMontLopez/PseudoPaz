@@ -267,6 +267,9 @@ export class Parser {
     if (this.match(TokenType.MOSTRAR)) {
       return this.parsePrintStatement();
     }
+    if (this.match(TokenType.SIN_SALTAR)) {
+      return this.parsePrintStatement(true);
+    }
     if (this.match(TokenType.DIMENSION)) {
       return this.parseDimensionStatement(this.previous());
     }
@@ -581,14 +584,33 @@ export class Parser {
   /**
    * Mostrar <expr1> [, <expr2>, ...]
    */
-  private parsePrintStatement(): PrintStatementNode {
+  private parsePrintStatement(alreadySinSaltar: boolean = false): PrintStatementNode {
     const printToken = this.previous();
+    let sinSaltar = alreadySinSaltar;
+
+    // Prefijo: Escribir Sin Saltar ...
+    if (this.match(TokenType.SIN_SALTAR)) {
+      sinSaltar = true;
+    }
+
     const expressions: ExpressionNode[] = [];
 
-    expressions.push(this.parseExpression());
-
-    while (this.match(TokenType.COMA)) {
+    // Expresiones separadas por comas (si no es punto y coma ni fin de sentencia ni sufijo)
+    if (
+      !this.check(TokenType.PUNTO_Y_COMA) &&
+      !this.check(TokenType.SIN_SALTAR) &&
+      !this.isEndOfBlockOrProgram()
+    ) {
       expressions.push(this.parseExpression());
+
+      while (this.match(TokenType.COMA)) {
+        expressions.push(this.parseExpression());
+      }
+    }
+
+    // Sufijo: Escribir ... Sin Saltar
+    if (this.match(TokenType.SIN_SALTAR)) {
+      sinSaltar = true;
     }
 
     this.consumeOptionalSemicolon();
@@ -596,10 +618,12 @@ export class Parser {
     return {
       nodeType: ASTNodeType.PRINT_STATEMENT,
       expressions,
+      sinSaltar,
       line: printToken.line,
       column: printToken.column,
     };
   }
+
 
   /**
    * <id> <- <expresion> o <id> = <expresion>

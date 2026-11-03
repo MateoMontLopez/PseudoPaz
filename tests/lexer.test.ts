@@ -139,6 +139,20 @@ describe('Lexer', () => {
     expect(tokens[2]).toMatchObject({ literal: 42, line: 2, column: 3 });
   });
 
+  it('debe tokenizar Sin Saltar y SinSaltar correctamente', () => {
+    const source = 'Escribir Sin Saltar "A"; Escribir SinSaltar "B"; sin_saltar "C"; sin_val <- 5;';
+    const lexer = new Lexer(source);
+    const tokens = lexer.tokenize();
+
+    expect(tokens[0]?.type).toBe(TokenType.MOSTRAR);
+    expect(tokens[1]?.type).toBe(TokenType.SIN_SALTAR);
+    expect(tokens[4]?.type).toBe(TokenType.MOSTRAR);
+    expect(tokens[5]?.type).toBe(TokenType.SIN_SALTAR);
+    expect(tokens[8]?.type).toBe(TokenType.SIN_SALTAR);
+    expect(tokens[11]?.type).toBe(TokenType.IDENTIFICADOR);
+    expect(tokens[11]?.lexeme).toBe('sin_val');
+  });
+
   it('debe lanzar LexerError si una cadena no se cierra', () => {
     const source = 'mensaje <- "cadena sin cerrar';
     const lexer = new Lexer(source);

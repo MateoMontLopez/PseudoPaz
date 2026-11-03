@@ -41,6 +41,7 @@ export type MainToWorkerMessage =
 export interface PrintOutputMessage {
   type: 'PRINT_OUTPUT';
   text: string;
+  sinSaltar?: boolean;
 }
 
 export interface WaitForInputMessage {

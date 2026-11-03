@@ -21,7 +21,7 @@ import {
 import { Environment, RuntimeError } from './Environment';
 
 export interface InterpreterIO {
-  onPrint: (output: string) => void;
+  onPrint: (output: string, sinSaltar?: boolean) => void;
   onRead: (variableName: string, expectedType: DataType) => Promise<string | number | boolean>;
   onStep?: (node: StatementNode, env: Environment) => Promise<void> | void;
 }
@@ -301,7 +301,7 @@ export class Interpreter {
       outputs.push(this.formatOutputValue(val));
     }
 
-    this.io.onPrint(outputs.join(' '));
+    this.io.onPrint(outputs.join(' '), stmt.sinSaltar ?? false);
   }
 
   private async executeReadStatement(stmt: ReadStatementNode, env: Environment): Promise<void> {

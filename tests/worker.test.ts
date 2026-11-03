@@ -220,5 +220,42 @@ describe('Web Worker & Execution Guard', () => {
       text: '50',
     });
   });
+
+  it('debe emitir mensajes PRINT_OUTPUT con la bandera sinSaltar', async () => {
+    const messagesToMain: WorkerToMainMessage[] = [];
+    const runtime = new WorkerRuntime((msg) => {
+      messagesToMain.push(msg);
+    });
+
+    const code = `
+      Algoritmo TestWorkerSinSaltar
+        Escribir Sin Saltar "[1, 1]";
+        Escribir Sin Saltar " [1, 2]";
+        Escribir "";
+      FinAlgoritmo
+    `;
+
+    await runtime.handleMessage({
+      type: 'START_EXECUTION',
+      code,
+    });
+
+    expect(messagesToMain).toContainEqual({
+      type: 'PRINT_OUTPUT',
+      text: '[1, 1]',
+      sinSaltar: true,
+    });
+
+    expect(messagesToMain).toContainEqual({
+      type: 'PRINT_OUTPUT',
+      text: ' [1, 2]',
+      sinSaltar: true,
+    });
+
+    expect(messagesToMain).toContainEqual({
+      type: 'PRINT_OUTPUT',
+      text: '',
+    });
+  });
 });
 

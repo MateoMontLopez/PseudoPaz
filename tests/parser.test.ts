@@ -200,6 +200,44 @@ describe('Parser', () => {
     expect(assign3.value.nodeType).toBe(ASTNodeType.BINARY_EXPRESSION);
   });
 
+  it('debe parsear Escribir Sin Saltar (prefijo, sufijo y comando directo)', () => {
+    const code = `
+      Escribir Sin Saltar 1, 2;
+      Escribir 3, 4 Sin Saltar;
+      SinSaltar 5;
+      Escribir "";
+      Escribir;
+    `;
+
+    const ast = parseCode(code);
+    expect(ast.body.length).toBe(5);
+
+    const stmt1 = ast.body[0] as PrintStatementNode;
+    expect(stmt1.nodeType).toBe(ASTNodeType.PRINT_STATEMENT);
+    expect(stmt1.sinSaltar).toBe(true);
+    expect(stmt1.expressions.length).toBe(2);
+
+    const stmt2 = ast.body[1] as PrintStatementNode;
+    expect(stmt2.nodeType).toBe(ASTNodeType.PRINT_STATEMENT);
+    expect(stmt2.sinSaltar).toBe(true);
+    expect(stmt2.expressions.length).toBe(2);
+
+    const stmt3 = ast.body[2] as PrintStatementNode;
+    expect(stmt3.nodeType).toBe(ASTNodeType.PRINT_STATEMENT);
+    expect(stmt3.sinSaltar).toBe(true);
+    expect(stmt3.expressions.length).toBe(1);
+
+    const stmt4 = ast.body[3] as PrintStatementNode;
+    expect(stmt4.nodeType).toBe(ASTNodeType.PRINT_STATEMENT);
+    expect(stmt4.sinSaltar).toBe(false);
+    expect(stmt4.expressions.length).toBe(1);
+
+    const stmt5 = ast.body[4] as PrintStatementNode;
+    expect(stmt5.nodeType).toBe(ASTNodeType.PRINT_STATEMENT);
+    expect(stmt5.sinSaltar).toBe(false);
+    expect(stmt5.expressions.length).toBe(0);
+  });
+
   it('debe parsear condicionales encadenados con SinoSi y Sino Si sin anidar FinSi', () => {
     const code = `
       Si nota >= 90 Entonces

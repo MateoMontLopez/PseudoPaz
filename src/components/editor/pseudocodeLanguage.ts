@@ -27,6 +27,10 @@ const KEYWORDS = new Set([
   'leer',
   'mostrar',
   'escribir',
+  'imprimir',
+  'sin',
+  'saltar',
+  'sinsaltar',
 ]);
 
 const TYPES = new Set([

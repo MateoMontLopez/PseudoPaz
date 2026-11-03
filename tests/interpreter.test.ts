@@ -6,14 +6,16 @@ import { RuntimeError } from '../src/engine/interpreter/Environment';
 
 async function runProgram(code: string, mockInputs: Record<string, string> = {}) {
   const prints: string[] = [];
+  const detailedPrints: { text: string; sinSaltar?: boolean }[] = [];
   const lexer = new Lexer(code);
   const tokens = lexer.tokenize();
   const parser = new Parser(tokens);
   const ast = parser.parse();
 
   const interpreter = new Interpreter({
-    onPrint: (output: string) => {
+    onPrint: (output: string, sinSaltar?: boolean) => {
       prints.push(output);
+      detailedPrints.push({ text: output, sinSaltar });
     },
     onRead: async (varName: string) => {
       const val = mockInputs[varName] ?? mockInputs[varName.toLowerCase()] ?? '0';
@@ -22,7 +24,7 @@ async function runProgram(code: string, mockInputs: Record<string, string> = {})
   });
 
   await interpreter.execute(ast);
-  return { prints, env: interpreter.getEnvironment() };
+  return { prints, detailedPrints, env: interpreter.getEnvironment() };
 }
 
 describe('Interpreter', () => {
@@ -297,6 +299,34 @@ describe('Interpreter', () => {
       'Nota 85: B',
       'Nota 75: C',
       'Nota 50: F',
+    ]);
+  });
+
+  it('debe ejecutar sentencias con Sin Saltar y respetar el flag en el flujo de ejecución', async () => {
+    const code = `
+      Algoritmo TestSinSaltar
+        Dimension M[2, 2];
+        M[1, 1] <- 10; M[1, 2] <- 20;
+        M[2, 1] <- 30; M[2, 2] <- 40;
+
+        Para i <- 1 Hasta 2 Con Paso 1 Hacer
+          Para j <- 1 Hasta 2 Con Paso 1 Hacer
+            Escribir Sin Saltar M[i, j], " ";
+          FinPara
+          Escribir "";
+        FinPara
+      FinAlgoritmo
+    `;
+
+    const { detailedPrints } = await runProgram(code);
+
+    expect(detailedPrints).toEqual([
+      { text: '10  ', sinSaltar: true },
+      { text: '20  ', sinSaltar: true },
+      { text: '', sinSaltar: false },
+      { text: '30  ', sinSaltar: true },
+      { text: '40  ', sinSaltar: true },
+      { text: '', sinSaltar: false },
     ]);
   });
 });

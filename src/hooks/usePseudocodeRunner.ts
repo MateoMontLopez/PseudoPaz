@@ -77,8 +77,60 @@ export function usePseudocodeRunner(options?: UsePseudocodeRunnerOptions) {
   const currentRunInputsRef = useRef<string[]>([]);
   const currentRunOutputsRef = useRef<ConsoleOutputItem[]>([]);
   const currentRunModeRef = useRef<'run' | 'step'>('run');
+  const activeLineIdRef = useRef<string | null>(null);
+
+  const appendStdout = useCallback((text: string, sinSaltar?: boolean) => {
+    const isSinSaltar = Boolean(sinSaltar);
+
+    // Si ya existe una línea activa y no ha sido cerrada por un salto de línea
+    if (activeLineIdRef.current !== null) {
+      const activeId = activeLineIdRef.current;
+      const targetIndex = currentRunOutputsRef.current.findIndex((item) => item.id === activeId);
+
+      if (targetIndex !== -1) {
+        currentRunOutputsRef.current[targetIndex] = {
+          ...currentRunOutputsRef.current[targetIndex],
+          text: currentRunOutputsRef.current[targetIndex].text + text,
+        };
+
+        setOutputs((prev) =>
+          prev.map((item) =>
+            item.id === activeId ? { ...item, text: item.text + text } : item
+          )
+        );
+
+        if (!isSinSaltar) {
+          activeLineIdRef.current = null;
+        }
+        return;
+      } else {
+        activeLineIdRef.current = null;
+      }
+    }
+
+    // No hay línea activa previa: crear una nueva
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    const newItem: ConsoleOutputItem = {
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      type: 'stdout',
+      text,
+      timestamp: timeStr,
+    };
+
+    currentRunOutputsRef.current.push(newItem);
+    setOutputs((prev) => [...prev, newItem]);
+
+    if (isSinSaltar) {
+      activeLineIdRef.current = newItem.id;
+    } else {
+      activeLineIdRef.current = null;
+    }
+  }, []);
 
   const appendOutput = useCallback((type: ConsoleOutputItem['type'], text: string, line?: number, column?: number) => {
+    activeLineIdRef.current = null;
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
@@ -129,6 +181,7 @@ export function usePseudocodeRunner(options?: UsePseudocodeRunnerOptions) {
 
   // Limpiar consola y destruir worker activo para liberar recursos
   const clearConsole = useCallback(() => {
+    activeLineIdRef.current = null;
     clearAutoStepTimer();
     interpreterWorkerService.terminate();
     setOutputs([]);
@@ -159,6 +212,7 @@ export function usePseudocodeRunner(options?: UsePseudocodeRunnerOptions) {
   // Iniciar ejecución estándar o paso a paso
   const run = useCallback(
     (code: string, mode: 'run' | 'step' = 'run') => {
+      activeLineIdRef.current = null;
       clearAutoStepTimer();
       // 1. Terminar worker previo si existe
       interpreterWorkerService.terminate();
@@ -190,8 +244,8 @@ export function usePseudocodeRunner(options?: UsePseudocodeRunnerOptions) {
         mode,
         timeoutMs: 10000,
         callbacks: {
-          onPrint: (text: string) => {
-            appendOutput('stdout', text);
+          onPrint: (text: string, sinSaltar?: boolean) => {
+            appendStdout(text, sinSaltar);
           },
           onWaitForInput: (variableName: string, expectedType: DataType) => {
             // Detener avance automático de pasos mientras se espera entrada del usuario
@@ -257,7 +311,7 @@ export function usePseudocodeRunner(options?: UsePseudocodeRunnerOptions) {
         },
       });
     },
-    [appendOutput, clearAutoStepTimer, options, recordRun]
+    [appendOutput, appendStdout, clearAutoStepTimer, options, recordRun]
   );
 
   // Iniciar depuración paso a paso o avanzar al siguiente paso si ya está en pausa

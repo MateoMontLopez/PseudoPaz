@@ -38,8 +38,8 @@ export class InterpreterWorkerService {
     this.controller = new ExecutionController({
       workerFactory: () => this.createWorker(),
       callbacks: {
-        onPrint: (text) => {
-          options.callbacks.onPrint(text);
+        onPrint: (text, sinSaltar) => {
+          options.callbacks.onPrint(text, sinSaltar);
         },
         onWaitForInput: (varName, type) => {
           options.callbacks.onWaitForInput(varName, type);
