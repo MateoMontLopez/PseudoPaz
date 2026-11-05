@@ -30,9 +30,17 @@ export function usePdfExporter({ code, outputs, executionHistory, getFlowchartEl
         setIsExporting(true);
 
         let dfdImage: string | null = null;
+        let dfdDimensions: { width: number; height: number } | null = null;
         if (config.exportMode === 'dfd_only' || config.exportMode === 'both') {
           const flowElement = getFlowchartElement();
-          dfdImage = await captureFlowchartCanvas(flowElement);
+          const captureResult = await captureFlowchartCanvas(flowElement);
+          if (captureResult) {
+            dfdImage = captureResult.dataUrl;
+            dfdDimensions = {
+              width: captureResult.width,
+              height: captureResult.height,
+            };
+          }
         }
 
         await generateAcademicPdf({
@@ -44,6 +52,7 @@ export function usePdfExporter({ code, outputs, executionHistory, getFlowchartEl
           outputs,
           executionHistory,
           dfdImageBase64: dfdImage,
+          dfdDimensions,
           exportMode: config.exportMode,
           fingerprint: config.fingerprint,
         });
@@ -54,7 +63,7 @@ export function usePdfExporter({ code, outputs, executionHistory, getFlowchartEl
         setIsExporting(false);
       }
     },
-    [code, outputs, getFlowchartElement]
+    [code, outputs, executionHistory, getFlowchartElement]
   );
 
   return {

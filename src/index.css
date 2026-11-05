@@ -19,7 +19,7 @@
   --text-muted: #71717a;
   --border-color: #27272a;
   --border-subtle: #18181b;
-  --node-bg: rgba(24, 24, 27, 0.92);
+  --node-bg: #18181b;
   --node-border: #3f3f46;
   --flow-bg: #09090b;
   --flow-dots: #27272a;
@@ -61,7 +61,7 @@
   --text-muted: #94a3b8;
   --border-color: #e2e8f0;
   --border-subtle: #cbd5e1;
-  --node-bg: rgba(255, 255, 255, 0.96);
+  --node-bg: #ffffff;
   --node-border: #cbd5e1;
   --flow-bg: #f8fafc;
   --flow-dots: #cbd5e1;

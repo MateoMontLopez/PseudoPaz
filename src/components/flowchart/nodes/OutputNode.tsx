@@ -66,10 +66,12 @@ export const OutputNode: React.FC<NodeProps<OutputNodeType>> = ({ id, data, sele
       >
         <path
           d="M 2 2 L 158 2 L 158 46 C 135 36, 105 36, 80 46 C 55 56, 25 56, 2 46 Z"
-          fill={selected ? 'rgba(34, 211, 238, 0.25)' : 'var(--node-bg)'}
+          fill={selected ? 'rgba(34, 211, 238, 0.25)' : 'var(--node-bg, #ffffff)'}
           stroke={selected ? '#22d3ee' : '#0891b2'}
           strokeWidth={selected ? 2 : 1.5}
+          className="fill-white dark:fill-zinc-900"
           style={{
+            fill: selected ? 'rgba(34, 211, 238, 0.25)' : 'var(--node-bg, #ffffff)',
             filter: selected
               ? 'drop-shadow(0 0 8px rgba(34, 211, 238, 0.5))'
               : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))',
