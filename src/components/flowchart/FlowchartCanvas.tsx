@@ -23,22 +23,8 @@ import { OutputNode } from './nodes/OutputNode';
 import { DecisionNode } from './nodes/DecisionNode';
 import { SidebarToolbar } from './SidebarToolbar';
 import { useFlowchartSecurity } from './useFlowchartSecurity';
-import { convertDFDToPseudocode } from './dfdToCode';
-import { VirtualConsole } from '../console/VirtualConsole';
-import {
-  RunnerStatus,
-  ConsoleOutputItem,
-  InputPromptState,
-} from '../../hooks/usePseudocodeRunner';
 import { useTheme } from '../../hooks/useTheme';
-import {
-  Play,
-  Square,
-  Terminal,
-  ShieldAlert,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react';
+import { ShieldAlert } from 'lucide-react';
 
 const nodeTypes = {
   terminal: TerminalNode,
@@ -55,37 +41,18 @@ const INITIAL_EDGES: Edge[] = [];
 
 interface FlowchartCanvasInnerProps {
   isExamMode: boolean;
-  onRunCode?: (code: string) => void;
-  onStop?: () => void;
-  status?: RunnerStatus;
-  outputs?: ConsoleOutputItem[];
-  inputPrompt?: InputPromptState | null;
-  executionTimeMs?: number | null;
-  onProvideInput?: (value: string) => void;
-  onClearConsole?: () => void;
 }
 
 const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
   isExamMode,
-  onRunCode,
-  onStop,
-  status = 'idle',
-  outputs = [],
-  inputPrompt = null,
-  executionTimeMs = null,
-  onProvideInput = () => {},
-  onClearConsole = () => {},
 }) => {
   const { isDark } = useTheme();
   const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
-  const [isConsoleOpen, setIsConsoleOpen] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { screenToFlowPosition, fitView } = useReactFlow();
-
-  const isRunning = status === 'running' || status === 'waiting_input';
 
   // Reinicio de seguridad si se pierde el foco en modo examen
   const handleSecurityReset = useCallback(() => {
@@ -242,22 +209,6 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
     setEdges([]);
   }, [setNodes, setEdges]);
 
-  // Ejecución directa del DFD
-  const handleRunDFD = useCallback(() => {
-    if (!onRunCode) return;
-
-    const result = convertDFDToPseudocode(nodes, edges);
-    if (!result.success || !result.code) {
-      setWarningMessage(result.error || 'No se pudo generar código desde el diagrama.');
-      setTimeout(() => setWarningMessage(null), 4000);
-      return;
-    }
-
-    // Abrir automáticamente la consola y despachar la ejecución al Web Worker
-    setIsConsoleOpen(true);
-    onRunCode(result.code);
-  }, [nodes, edges, onRunCode]);
-
   return (
     <div className="flex w-full h-full overflow-hidden bg-[#09090b]">
       {/* Barra de herramientas lateral */}
@@ -267,9 +218,9 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
         onAddNodeClick={handleAddNodeClick}
       />
 
-      {/* Área del Lienzo React Flow + Barra de Acciones + Consola Embebida */}
+      {/* Área del Lienzo React Flow + Barra de Información Superior */}
       <div className="flex-1 h-full flex flex-col relative overflow-hidden">
-        {/* Barra superior de acciones del Lienzo DFD */}
+        {/* Barra superior del Lienzo DFD (Modo Edición Visual) */}
         <div
           className={`h-10 px-4 border-b flex items-center justify-between z-20 shrink-0 select-none transition-colors duration-150 ${
             isDark
@@ -289,57 +240,10 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center space-x-2.5">
-            {/* Botón destacado: [ ▶️ Ejecutar DFD ] */}
-            {!isRunning ? (
-              <button
-                onClick={handleRunDFD}
-                title="Convertir DFD a código ejecutable y correr en Web Worker"
-                className="flex items-center space-x-1.5 px-3 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded text-xs font-semibold transition-all shadow-md shadow-emerald-950/20 active:scale-95 cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>Ejecutar DFD</span>
-              </button>
-            ) : (
-              <button
-                onClick={onStop}
-                title="Detener ejecución del DFD"
-                className="flex items-center space-x-1.5 px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded text-xs font-semibold transition-all shadow-md shadow-rose-950/20 active:scale-95 cursor-pointer"
-              >
-                <Square className="w-3.5 h-3.5 fill-current" />
-                <span>Detener</span>
-              </button>
-            )}
-
-            {/* Botón para alternar la consola I/O en la vista de diagrama */}
-            <button
-              onClick={() => setIsConsoleOpen((prev) => !prev)}
-              title={isConsoleOpen ? 'Ocultar consola de salida' : 'Mostrar consola de salida'}
-              className={`flex items-center space-x-1 px-2.5 py-1 rounded text-xs transition-colors cursor-pointer border ${
-                isConsoleOpen
-                  ? 'bg-sky-500/20 text-sky-600 dark:text-sky-300 border-sky-500/40'
-                  : isDark
-                  ? 'bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border-zinc-800'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-300'
-              }`}
-            >
-              <Terminal className="w-3.5 h-3.5" />
-              <span>Consola</span>
-              {outputs.length > 0 && (
-                <span
-                  className={`ml-1 px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
-                    isDark ? 'bg-zinc-800 text-zinc-300' : 'bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  {outputs.length}
-                </span>
-              )}
-              {isConsoleOpen ? (
-                <ChevronDown className="w-3 h-3 text-zinc-400" />
-              ) : (
-                <ChevronUp className="w-3 h-3 text-zinc-400" />
-              )}
-            </button>
+          <div className="flex items-center space-x-2">
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-medium">
+              Modo Edición Visual
+            </span>
           </div>
         </div>
 
@@ -404,24 +308,6 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
             </div>
           )}
         </div>
-
-        {/* Panel inferior embebido de Consola Virtual I/O para ejecución directa desde DFD */}
-        {isConsoleOpen && (
-          <div
-            className={`h-56 w-full border-t flex flex-col shrink-0 z-20 animate-in slide-in-from-bottom-4 duration-150 ${
-              isDark ? 'border-zinc-800/80 bg-[#0d0d10]' : 'border-slate-200 bg-white'
-            }`}
-          >
-            <VirtualConsole
-              outputs={outputs}
-              status={status}
-              inputPrompt={inputPrompt}
-              executionTimeMs={executionTimeMs}
-              onProvideInput={onProvideInput}
-              onClearConsole={onClearConsole}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
@@ -429,40 +315,14 @@ const FlowchartCanvasInner: React.FC<FlowchartCanvasInnerProps> = ({
 
 export interface FlowchartCanvasProps {
   isExamMode?: boolean;
-  onRunCode?: (code: string) => void;
-  onStop?: () => void;
-  status?: RunnerStatus;
-  outputs?: ConsoleOutputItem[];
-  inputPrompt?: InputPromptState | null;
-  executionTimeMs?: number | null;
-  onProvideInput?: (value: string) => void;
-  onClearConsole?: () => void;
 }
 
 export const FlowchartCanvas: React.FC<FlowchartCanvasProps> = ({
   isExamMode = false,
-  onRunCode,
-  onStop,
-  status = 'idle',
-  outputs = [],
-  inputPrompt = null,
-  executionTimeMs = null,
-  onProvideInput,
-  onClearConsole,
 }) => {
   return (
     <ReactFlowProvider>
-      <FlowchartCanvasInner
-        isExamMode={isExamMode}
-        onRunCode={onRunCode}
-        onStop={onStop}
-        status={status}
-        outputs={outputs}
-        inputPrompt={inputPrompt}
-        executionTimeMs={executionTimeMs}
-        onProvideInput={onProvideInput}
-        onClearConsole={onClearConsole}
-      />
+      <FlowchartCanvasInner isExamMode={isExamMode} />
     </ReactFlowProvider>
   );
 };
