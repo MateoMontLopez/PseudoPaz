@@ -1,6 +1,6 @@
 {
   "name": "web-pseudopaz-core",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Core compilation and interpretation engine for Spanish Pseudocode IDE",
   "type": "module",
   "scripts": {
