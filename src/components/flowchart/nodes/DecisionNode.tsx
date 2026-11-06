@@ -65,11 +65,17 @@ export const DecisionNode: React.FC<NodeProps<DecisionNodeType>> = ({ id, data, 
       >
         <polygon
           points="85,3 167,45 85,87 3,45"
-          className={`transition-colors duration-150 ${
+          fill={selected ? 'rgba(251, 191, 36, 0.25)' : 'var(--node-bg, #ffffff)'}
+          stroke={selected ? '#fbbf24' : '#d97706'}
+          strokeWidth={selected ? 2 : 1.5}
+          className={`transition-colors duration-150 fill-white dark:fill-zinc-900 ${
             selected
-              ? 'fill-amber-500/20 stroke-amber-400 stroke-2'
-              : 'fill-[var(--node-bg)] stroke-amber-500/70 group-hover:stroke-amber-500 stroke-[1.5]'
+              ? 'stroke-amber-400 stroke-2'
+              : 'stroke-amber-500/70 group-hover:stroke-amber-500 stroke-[1.5]'
           }`}
+          style={{
+            fill: selected ? 'rgba(251, 191, 36, 0.25)' : 'var(--node-bg, #ffffff)',
+          }}
         />
       </svg>
 

@@ -72,10 +72,12 @@ export const InputNode: React.FC<NodeProps<InputNodeType | IONodeType>> = ({
       >
         <polygon
           points="18,3 157,3 142,49 3,49"
-          fill={selected ? 'rgba(192, 132, 252, 0.25)' : 'var(--node-bg)'}
+          fill={selected ? 'rgba(192, 132, 252, 0.25)' : 'var(--node-bg, #ffffff)'}
           stroke={selected ? '#c084fc' : '#9333ea'}
           strokeWidth={selected ? 2 : 1.5}
+          className="fill-white dark:fill-zinc-900"
           style={{
+            fill: selected ? 'rgba(192, 132, 252, 0.25)' : 'var(--node-bg, #ffffff)',
             filter: selected
               ? 'drop-shadow(0 0 8px rgba(192, 132, 252, 0.5))'
               : 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15))',

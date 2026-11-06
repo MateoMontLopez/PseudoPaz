@@ -42,11 +42,13 @@ export const ProcessNode: React.FC<NodeProps<ProcessNodeType>> = ({ id, data, se
   return (
     <div
       onDoubleClick={() => setIsEditing(true)}
-      style={{ background: 'transparent' }}
-      className={`relative group px-5 py-3 rounded-md border transition-all duration-150 select-none shadow-md min-w-[130px] max-w-[240px] text-center cursor-pointer ${
+      style={{
+        backgroundColor: selected ? undefined : 'var(--node-bg, #ffffff)',
+      }}
+      className={`relative group px-5 py-3 rounded-md border transition-all duration-150 select-none shadow-md min-w-[130px] max-w-[240px] text-center cursor-pointer bg-white dark:bg-zinc-900 ${
         selected
           ? 'border-sky-500 bg-sky-500/20 ring-2 ring-sky-500/40'
-          : 'border-sky-600/70 dark:border-sky-700/60 bg-[var(--node-bg)] hover:border-sky-500'
+          : 'border-sky-600/70 dark:border-sky-700/60 hover:border-sky-500'
       }`}
     >
       {/* 4 Handles Source y 4 Handles Target (Top, Bottom, Left, Right) */}
@@ -75,7 +77,7 @@ export const ProcessNode: React.FC<NodeProps<ProcessNodeType>> = ({ id, data, se
           className="bg-transparent text-[var(--text-primary)] text-xs font-mono font-medium text-center outline-none w-full border-b border-sky-400/50"
         />
       ) : (
-        <span className="text-xs font-mono font-medium text-[var(--text-primary)] block break-words">
+        <span className="text-xs font-mono font-medium text-slate-900 dark:text-zinc-100 block break-words">
           {text}
         </span>
       )}

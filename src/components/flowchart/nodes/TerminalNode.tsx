@@ -42,11 +42,13 @@ export const TerminalNode: React.FC<NodeProps<TerminalNodeType>> = ({ id, data, 
   return (
     <div
       onDoubleClick={() => setIsEditing(true)}
-      style={{ background: 'transparent' }}
-      className={`relative group px-6 py-2.5 rounded-full border transition-all duration-150 select-none shadow-md min-w-[125px] text-center cursor-pointer ${
+      style={{
+        backgroundColor: selected ? undefined : 'var(--node-bg, #ffffff)',
+      }}
+      className={`relative group px-6 py-2.5 rounded-full border transition-all duration-150 select-none shadow-md min-w-[125px] text-center cursor-pointer bg-white dark:bg-zinc-900 ${
         selected
           ? 'border-emerald-500 bg-emerald-500/20 ring-2 ring-emerald-500/40'
-          : 'border-emerald-600/70 dark:border-emerald-600/70 bg-[var(--node-bg)] hover:border-emerald-500'
+          : 'border-emerald-600/70 dark:border-emerald-600/70 hover:border-emerald-500'
       }`}
     >
       {/* 4 Handles Source y 4 Handles Target (Top, Bottom, Left, Right) */}
@@ -75,7 +77,7 @@ export const TerminalNode: React.FC<NodeProps<TerminalNodeType>> = ({ id, data, 
           className="bg-transparent text-emerald-600 dark:text-emerald-200 text-xs font-mono font-medium text-center outline-none w-full border-b border-emerald-400/50"
         />
       ) : (
-        <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-300 block tracking-wide">
+        <span className="text-xs font-mono font-medium text-emerald-700 dark:text-emerald-300 block tracking-wide">
           {text}
         </span>
       )}

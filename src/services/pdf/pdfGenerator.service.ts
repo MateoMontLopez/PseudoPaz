@@ -39,6 +39,7 @@ export interface GeneratePdfOptions {
   outputs: ConsoleOutputItem[];
   executionHistory?: ExecutionRunRecord[];
   dfdImageBase64?: string | null;
+  dfdDimensions?: { width: number; height: number } | null;
   exportMode: ExportContentType;
   fingerprint: FingerprintResult;
 }
@@ -78,6 +79,7 @@ export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<
     outputs,
     executionHistory,
     dfdImageBase64,
+    dfdDimensions,
     exportMode,
     fingerprint,
   } = options;
@@ -141,7 +143,14 @@ export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<
 
   // ================= 3. SECCIÓN DIAGRAMA DE FLUJO (DFD) =================
   if (exportMode === 'dfd_only' || exportMode === 'both') {
-    const isPageBreakNeeded = exportMode === 'both';
+    // Si es exportación combinada, o si en dfd_only el diagrama es predominantemente vertical/grande,
+    // se coloca en una página limpia para aprovechar al máximo el espacio A4 y evitar compresiones excesivas.
+    const isTallDiagram = !!(
+      dfdDimensions &&
+      dfdDimensions.height > 0 &&
+      dfdDimensions.height / dfdDimensions.width > 0.85
+    );
+    const isPageBreakNeeded = exportMode === 'both' || (exportMode === 'dfd_only' && isTallDiagram);
 
     // Título de la sección como imagen vectorizada no seleccionable
     const dfdTitleImage = renderSectionTitle('2. DIAGRAMA DE FLUJO (DFD)');
@@ -153,9 +162,14 @@ export async function generateAcademicPdf(options: GeneratePdfOptions): Promise<
     });
 
     if (dfdImageBase64) {
+      // Dimensiones máximas imprimibles en página A4 (595x842 pt con márgenes de 40 y 45):
+      // Ancho imprimible: 515 pt.
+      // Alto imprimible: ~650 pt (en página completa) o ~480 pt (en página 1 bajo el encabezado).
+      const maxAvailableHeight = isPageBreakNeeded ? 650 : 480;
+
       content.push({
         image: dfdImageBase64,
-        width: 515, // Ancho exacto imprimible en página A4 con márgenes de 40
+        fit: [515, maxAvailableHeight], // Auto-ajuste proporcional para garantizar que nunca desborde ni se corte
         alignment: 'center',
         margin: [0, 0, 0, 15],
       });
