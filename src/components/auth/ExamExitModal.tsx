@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldAlert, KeyRound, AlertCircle, X, Check, Clock } from 'lucide-react';
+import { ShieldAlert, KeyRound, AlertCircle, X, Check, Clock, Eye, EyeOff } from 'lucide-react';
 import { validateDynamicExamPin } from '../../utils/dynamicPin';
 
 interface ExamExitModalProps {
@@ -14,6 +14,7 @@ export const ExamExitModal: React.FC<ExamExitModalProps> = ({
   onSuccess,
 }) => {
   const [pin, setPin] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const [currentTimeStr, setCurrentTimeStr] = useState('');
@@ -112,7 +113,7 @@ export const ExamExitModal: React.FC<ExamExitModalProps> = ({
           <div className="flex items-center justify-between">
             <span className="font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
               <KeyRound className="w-3.5 h-3.5 text-amber-500" />
-              Clave Dinámica (Hora Actual)
+              Autorización Docente
             </span>
             <span className="flex items-center gap-1 font-mono text-[11px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
               <Clock className="w-3 h-3" />
@@ -120,41 +121,50 @@ export const ExamExitModal: React.FC<ExamExitModalProps> = ({
             </span>
           </div>
           <p className="text-[11.5px] text-[var(--text-secondary)] leading-relaxed">
-            Ingrese el código de 4 dígitos correspondiente (solicítelo al profesor o evaluador a cargo).
+            Ingrese la clave de autorización docente (4 letras).
           </p>
         </div>
 
-        {/* Formulario de ingreso de PIN */}
+        {/* Formulario de ingreso de Clave Alfabética */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-[var(--text-secondary)] mb-1.5">
-              PIN de Autorización (4 dígitos)
+              Clave de Autorización (4 letras)
             </label>
-            <div className="relative">
+            <div className="relative flex items-center">
               <input
                 ref={inputRef}
-                type="password"
-                inputMode="numeric"
-                pattern="[0-9]*"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="off"
+                spellCheck={false}
                 maxLength={4}
                 value={pin}
                 onChange={(e) => {
                   setError(false);
-                  const sanitized = e.target.value.replace(/\D/g, '').slice(0, 4);
+                  const sanitized = e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 4);
                   setPin(sanitized);
                 }}
                 placeholder="••••"
-                className={`w-full px-4 py-2.5 bg-[var(--bg-app)] border rounded-xl font-mono text-center text-lg tracking-[0.4em] text-[var(--text-primary)] focus:outline-none transition-all placeholder:text-[var(--text-muted)] placeholder:tracking-normal ${error
-                  ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/30 animate-shake'
-                  : 'border-[var(--border-color)] focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
-                  }`}
+                className={`w-full px-4 py-2.5 pr-10 bg-[var(--bg-app)] border rounded-xl font-mono text-center text-lg tracking-[0.4em] uppercase text-[var(--text-primary)] focus:outline-none transition-all placeholder:text-[var(--text-muted)] placeholder:tracking-normal ${
+                  error
+                    ? 'border-rose-500 focus:ring-2 focus:ring-rose-500/30 animate-shake'
+                    : 'border-[var(--border-color)] focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
+                }`}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors cursor-pointer"
+                title={showPassword ? 'Ocultar clave' : 'Mostrar clave'}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
             {error && (
               <div className="flex items-center space-x-1.5 mt-2 text-rose-500 text-xs animate-in fade-in">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>
-                  Clave dinámica incorrecta ({attempts} {attempts === 1 ? 'intento fallido' : 'intentos fallidos'}). Verifique el formato HHMM.
+                  Clave de autorización incorrecta ({attempts} {attempts === 1 ? 'intento fallido' : 'intentos fallidos'}). Verifique con el docente a cargo.
                 </span>
               </div>
             )}

@@ -1,51 +1,96 @@
 import { describe, expect, it } from 'vitest';
-import { getDynamicExamPin, validateDynamicExamPin } from '../src/utils/dynamicPin';
+import {
+  getExpectedExamExitCode,
+  getDynamicExamPin,
+  validateDynamicExamPin,
+  DIGIT_TO_LETTER,
+} from '../src/utils/dynamicPin';
 
-describe('Dynamic Exam PIN (HHMM 24h format) Tests', () => {
-  it('debe generar el PIN de 4 dígitos correspondiente a la hora actual en formato 24h', () => {
-    // Caso 1: 14:05 -> "1405"
-    const date1 = new Date(2026, 9, 18, 14, 5, 20);
-    expect(getDynamicExamPin(date1)).toBe('1405');
-
-    // Caso 2: 08:09 -> "0809"
-    const date2 = new Date(2026, 9, 18, 8, 9, 0);
-    expect(getDynamicExamPin(date2)).toBe('0809');
-
-    // Caso 3: Medianoche 00:00 -> "0000"
-    const date3 = new Date(2026, 9, 18, 0, 0, 45);
-    expect(getDynamicExamPin(date3)).toBe('0000');
-
-    // Caso 4: 23:59 -> "2359"
-    const date4 = new Date(2026, 9, 18, 23, 59, 10);
-    expect(getDynamicExamPin(date4)).toBe('2359');
+describe('Clave Alfabética Dinámica de Salida de Modo Examen', () => {
+  it('debe tener el mapeo exacto de dígitos a letras (1->a ... 9->i, 0->j)', () => {
+    expect(DIGIT_TO_LETTER).toEqual({
+      '1': 'a',
+      '2': 'b',
+      '3': 'c',
+      '4': 'd',
+      '5': 'e',
+      '6': 'f',
+      '7': 'g',
+      '8': 'h',
+      '9': 'i',
+      '0': 'j',
+    });
   });
 
-  it('debe validar exitosamente cuando el PIN coincide con el minuto actual', () => {
-    const refDate = new Date(2026, 9, 18, 16, 30, 15);
-    expect(validateDynamicExamPin('1630', refDate)).toBe(true);
-    expect(validateDynamicExamPin(' 1630 ', refDate)).toBe(true);
+  it('debe generar el código alfabético de 4 letras según la hora actual en formato 24h', () => {
+    // 00:00 -> "0000" -> "jjjj"
+    const dateMidnight = new Date(2026, 10, 12, 0, 0, 15);
+    expect(getExpectedExamExitCode(dateMidnight)).toBe('jjjj');
+
+    // 12:34 -> "1234" -> "abcd"
+    const date1234 = new Date(2026, 10, 12, 12, 34, 0);
+    expect(getExpectedExamExitCode(date1234)).toBe('abcd');
+
+    // 19:50 -> "1950" -> "aiej"
+    const date1950 = new Date(2026, 10, 12, 19, 50, 40);
+    expect(getExpectedExamExitCode(date1950)).toBe('aiej');
+
+    // 14:30 -> "1430" -> "adcj"
+    const date1430 = new Date(2026, 10, 12, 14, 30, 0);
+    expect(getExpectedExamExitCode(date1430)).toBe('adcj');
+
+    // 09:05 -> "0905" -> "jije"
+    const date0905 = new Date(2026, 10, 12, 9, 5, 59);
+    expect(getExpectedExamExitCode(date0905)).toBe('jije');
+
+    // 23:59 -> "2359" -> "bcei"
+    const date2359 = new Date(2026, 10, 12, 23, 59, 0);
+    expect(getExpectedExamExitCode(date2359)).toBe('bcei');
+  });
+
+  it('el alias getDynamicExamPin debe ser equivalente a getExpectedExamExitCode', () => {
+    const date = new Date(2026, 10, 12, 16, 28, 0);
+    expect(getDynamicExamPin(date)).toBe(getExpectedExamExitCode(date));
+  });
+
+  it('debe validar exitosamente en minúsculas y mayúsculas (insensible a capitalización)', () => {
+    const refDate = new Date(2026, 10, 12, 12, 34, 10);
+    // Minúsculas exactas
+    expect(validateDynamicExamPin('abcd', refDate)).toBe(true);
+    // Mayúsculas completas (ej. Bloq Mayús activo)
+    expect(validateDynamicExamPin('ABCD', refDate)).toBe(true);
+    // Mixto
+    expect(validateDynamicExamPin('AbCd', refDate)).toBe(true);
+    // Con espacios al inicio o final
+    expect(validateDynamicExamPin('  abcd  ', refDate)).toBe(true);
   });
 
   it('debe admitir tolerancia de 1 minuto previo por si el reloj avanzó mientras se digitaba', () => {
-    // A las 16:31:05, la clave "1630" del minuto anterior sigue siendo válida
-    const refDate = new Date(2026, 9, 18, 16, 31, 5);
-    expect(validateDynamicExamPin('1630', refDate)).toBe(true);
-    expect(validateDynamicExamPin('1631', refDate)).toBe(true);
+    // A las 12:35:05, la clave "abcd" del minuto 12:34 sigue siendo válida
+    const refDate = new Date(2026, 10, 12, 12, 35, 5);
+    expect(validateDynamicExamPin('abcd', refDate)).toBe(true);
+    // Y la clave del minuto actual "abce" también es válida
+    expect(validateDynamicExamPin('abce', refDate)).toBe(true);
   });
 
-  it('debe rechazar claves incorrectas o con desfase mayor', () => {
-    const refDate = new Date(2026, 9, 18, 16, 30, 0);
-    expect(validateDynamicExamPin('1628', refDate)).toBe(false);
-    expect(validateDynamicExamPin('1632', refDate)).toBe(false);
-    expect(validateDynamicExamPin('0000', refDate)).toBe(false);
+  it('debe rechazar claves incorrectas o desfasadas', () => {
+    const refDate = new Date(2026, 10, 12, 12, 34, 0);
+    expect(validateDynamicExamPin('jjjj', refDate)).toBe(false);
+    expect(validateDynamicExamPin('aiej', refDate)).toBe(false);
+    expect(validateDynamicExamPin('bbbb', refDate)).toBe(false);
+  });
+
+  it('debe rechazar entradas numéricas, incompletas o con caracteres fuera de rango', () => {
+    const refDate = new Date(2026, 10, 12, 12, 34, 0);
+    // Numéricas (formato anterior)
     expect(validateDynamicExamPin('1234', refDate)).toBe(false);
-  });
-
-  it('debe rechazar entradas con formato inválido', () => {
-    const refDate = new Date(2026, 9, 18, 10, 20, 0);
+    // Vacío
     expect(validateDynamicExamPin('', refDate)).toBe(false);
-    expect(validateDynamicExamPin('102', refDate)).toBe(false);
-    expect(validateDynamicExamPin('10200', refDate)).toBe(false);
-    expect(validateDynamicExamPin('abcd', refDate)).toBe(false);
+    // Longitud incorrecta
+    expect(validateDynamicExamPin('abc', refDate)).toBe(false);
+    expect(validateDynamicExamPin('abcde', refDate)).toBe(false);
+    // Caracteres fuera del rango a-j
+    expect(validateDynamicExamPin('wxyz', refDate)).toBe(false);
+    expect(validateDynamicExamPin('abck', refDate)).toBe(false);
   });
 });
