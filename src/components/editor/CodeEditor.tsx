@@ -21,6 +21,11 @@ import { bracketMatching, indentOnInput } from '@codemirror/language';
 import { autocompletion } from '@codemirror/autocomplete';
 import { pseudocodeLanguage, pseudocodeTheme } from './pseudocodeLanguage';
 import { pseudocodeCompletionSource } from './pseudocodeAutocomplete';
+import {
+  indentGuidesPlugin,
+  pseudocodeIndentService,
+  pseudocodeIndentUnit,
+} from './pseudocodeIndent';
 import { useClipboardGuard } from './useClipboardGuard';
 import { ShieldAlert } from 'lucide-react';
 
@@ -147,6 +152,9 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
           history(),
           bracketMatching(),
           indentOnInput(),
+          pseudocodeIndentUnit,
+          pseudocodeIndentService,
+          indentGuidesPlugin,
           pseudocodeLanguage,
           pseudocodeTheme,
           executionLineField,
@@ -189,6 +197,33 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
               borderLeft: '4px solid #f59e0b !important',
               boxShadow: 'inset 0 0 16px rgba(245, 158, 11, 0.15)',
               transition: 'background-color 0.15s ease',
+            },
+            '.cm-line': {
+              position: 'relative',
+            },
+            '.cm-indent-guides-container': {
+              position: 'absolute',
+              top: '0',
+              bottom: '0',
+              left: '0',
+              right: '0',
+              pointerEvents: 'none',
+              userSelect: 'none',
+              overflow: 'visible',
+            },
+            '.cm-indent-guide': {
+              position: 'absolute',
+              top: '0',
+              bottom: '0',
+              width: '1px',
+              backgroundColor: 'var(--cm-indent-guide, rgba(148, 163, 184, 0.18))',
+              transition: 'background-color 0.15s ease, width 0.15s ease',
+            },
+            '.cm-indent-guide-active': {
+              width: '1.5px',
+              backgroundColor: 'var(--cm-indent-guide-active, #38bdf8) !important',
+              boxShadow: '0 0 6px rgba(56, 189, 248, 0.45)',
+              zIndex: '2',
             },
             '.cm-tooltip-autocomplete': {
               backgroundColor: 'var(--bg-surface)',

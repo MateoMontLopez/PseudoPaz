@@ -1,5 +1,6 @@
-import { StreamLanguage, StringStream, HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { StreamLanguage, StringStream, HighlightStyle, syntaxHighlighting, IndentContext } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
+import { pseudocodeIndent } from './pseudocodeIndent';
 
 const KEYWORDS = new Set([
   'algoritmo',
@@ -146,6 +147,17 @@ export const pseudocodeLanguage = StreamLanguage.define<ParserState>({
 
     stream.next();
     return null;
+  },
+  indent(_state: ParserState, textAfter: string, context: IndentContext) {
+    const head = context.state.selection?.main?.head ?? 0;
+    const pos = context.state.doc.lineAt(head).from;
+    return pseudocodeIndent(context, pos, textAfter);
+  },
+  languageData: {
+    indentOnInput:
+      /^\s*(?:finalgoritmo|finproceso|fin\b|finsi|fin\s+si|finpara|fin\s+para|finmientras|fin\s+mientras|hasta\s+que|hasta\b|finsegun|fin\s+segun|sino\s+si|sino\b|caso\b|de\s+otro\s+modo)/i,
+    commentTokens: { line: '//', block: { open: '/*', close: '*/' } },
+    closeBrackets: { brackets: ['(', '[', '{', '"', "'"] },
   },
 });
 

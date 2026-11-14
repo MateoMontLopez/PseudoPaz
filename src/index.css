@@ -29,6 +29,8 @@
   --cm-active-line-gutter: #18181b;
   --cm-active-line: rgba(255, 255, 255, 0.02);
   --cm-gutter-border: #18181b;
+  --cm-indent-guide: rgba(255, 255, 255, 0.09);
+  --cm-indent-guide-active: #38bdf8;
   --console-bg: #0d0d10;
   --console-header-bg: rgba(24, 24, 27, 0.6);
   --scrollbar-thumb: #27272a;
@@ -71,6 +73,8 @@
   --cm-active-line-gutter: #f1f5f9;
   --cm-active-line: rgba(0, 0, 0, 0.03);
   --cm-gutter-border: #e2e8f0;
+  --cm-indent-guide: rgba(0, 0, 0, 0.08);
+  --cm-indent-guide-active: #0284c7;
   --console-bg: #ffffff;
   --console-header-bg: #f1f5f9;
   --scrollbar-thumb: #cbd5e1;
