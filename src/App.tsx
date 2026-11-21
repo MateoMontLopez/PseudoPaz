@@ -12,11 +12,13 @@ import { ExportPdfModal } from './components/pdf/ExportPdfModal';
 import { ExecutionModal } from './components/console/ExecutionModal';
 import { usePseudocodeRunner } from './hooks/usePseudocodeRunner';
 import { useSessionGuard } from './hooks/useSessionGuard';
+import { useNetworkStatus } from './hooks/useNetworkStatus';
 import { usePdfExporter } from './hooks/usePdfExporter';
 import { LandingPage } from './components/landing/LandingPage';
 import { HashAuditor } from './components/audit/HashAuditor';
 import { PinModal } from './components/auth/PinModal';
 import { ExamExitModal } from './components/auth/ExamExitModal';
+import { ExamInternetBlockModal } from './components/auth/ExamInternetBlockModal';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import {
   WorkspaceFile,
@@ -195,6 +197,10 @@ export const App: React.FC = () => {
     onSessionReset: handleSessionReset,
     initialEnabled: false,
   });
+
+  // Detección de conectividad a Internet para bloqueo obligatorio en Modo Examen
+  const isOnline = useNetworkStatus();
+  const isInternetBlockedInExam = isGuardEnabled && isOnline;
 
   // Salida de Modo Examen protegida mediante clave dinámica por hora actual (HHMM)
   const handleToggleGuard = useCallback(() => {
@@ -614,6 +620,12 @@ export const App: React.FC = () => {
             isOpen={isExamExitModalOpen}
             onClose={() => setIsExamExitModalOpen(false)}
             onSuccess={handleExamExitSuccess}
+          />
+
+          {/* Modal Bloqueante de Conexión a Internet en Modo Examen (Máxima Prioridad) */}
+          <ExamInternetBlockModal
+            isOpen={isInternetBlockedInExam}
+            onRequestTeacherExit={() => setIsExamExitModalOpen(true)}
           />
         </div>
       )}
